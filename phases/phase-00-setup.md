@@ -30,7 +30,7 @@ Stand up a fresh .NET 10 solution mirroring the structure of learn-xunit, with:
 
 ## Steps
 
-### Step 1 — Create the solution structure  `[ ]`
+### Step 1 — Create the solution structure  `[x]`
 
 In `~/professional/projects/learn-language-ext/`, you want this layout:
 
@@ -62,7 +62,7 @@ After running these, verify both csproj files have `<Nullable>enable</Nullable>`
 
 Delete the `Class1.cs` placeholder that `dotnet new classlib` generates in `src/Expenses/` — we'll start clean.
 
-### Step 2 — Add the LanguageExt package  `[ ]`
+### Step 2 — Add the LanguageExt package  `[x]`
 
 ```
 dotnet add src/Expenses package LanguageExt.Core
@@ -76,7 +76,7 @@ Once you know what landed, record the exact version in the **Decisions** section
 
 The test project doesn't need a direct LanguageExt reference — transitive resolution from `src/Expenses` is sufficient. If we ever need LanguageExt types in test infrastructure that isn't going through production code, we'll add a direct reference at that point.
 
-### Step 3 — Configure `xunit.runner.json`  `[ ]`
+### Step 3 — Configure `xunit.runner.json`  `[x]`
 
 Copy `xunit.runner.json` from `learn-xunit/tests/Ledger.Tests/` to `tests/Expenses.Tests/` — same file, same settings.
 
@@ -88,7 +88,7 @@ Add to `Expenses.Tests.csproj` so it gets copied to output:
 </ItemGroup>
 ```
 
-### Step 4 — Write the smoke test  `[ ]`
+### Step 4 — Write the smoke test  `[x]`
 
 Create `tests/Expenses.Tests/SmokeTest.cs` with two `[Fact]`s, exercising both halves of the toolchain:
 
@@ -120,7 +120,7 @@ Two things you'll see again throughout the tutorial:
 - **`using static LanguageExt.Prelude;`** brings `Some`, `None`, `Right`, `Left`, `Fin.Succ`, `Fin.Fail`, and a lot of other free functions into scope. This is the idiomatic LanguageExt usage — we'll lean into it from Phase 1 onward. (F# users will recognize the spirit: top-level constructor functions rather than nested static methods.)
 - **`Option<int>`** is structurally what you already know from F#/Clojure/JS — the LanguageExt-specific idioms are mostly about syntax and interop, which Phase 1 covers.
 
-### Step 5 — Verify  `[ ]`
+### Step 5 — Verify  `[x]`
 
 From the project root:
 
@@ -134,7 +134,7 @@ Both smoke tests should pass.
 
 **If test discovery doesn't find the tests:** compare your `Expenses.Tests.csproj` to `learn-xunit/tests/Ledger.Tests/Ledger.Tests.csproj` line-by-line. The MTP-specific properties (`<OutputType>Exe</OutputType>`, `<TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>`, `<IsTestProject>true</IsTestProject>`) all need to be present.
 
-### Step 6 — Capture decisions  `[ ]`
+### Step 6 — Capture decisions  `[x]`
 
 Update the **Decisions made** section with the actual LanguageExt version that landed. This is the project's record of "what was true when we started" — future-you will appreciate it.
 

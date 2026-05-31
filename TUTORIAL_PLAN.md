@@ -24,7 +24,7 @@ By the end you should be able to:
 
 ## Phases
 
-- [ ] Phase 0 — Setup
+- [x] Phase 0 — Setup
 - [ ] Phase 1 — `Option<T>` the LanguageExt way
 - [ ] Phase 2 — `Either<L, R>` and `Fin<T>`
 - [ ] Phase 3 — `Validation<F, S>`
