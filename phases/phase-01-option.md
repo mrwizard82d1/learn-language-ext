@@ -41,7 +41,7 @@ If something feels surprising later, it's almost certainly one of these five row
 
 Kent Beck style — not all required, and order/scope is yours to adjust. Strike through as you land them.
 
-- [ ] Looking up a category that exists returns `Some(category)`
+- [x] Looking up a category that exists returns `Some(category)`
 - [ ] Looking up a category that doesn't exist returns `None`
 - [ ] `IfNone` supplies a fallback category on a miss
 - [ ] `Match` runs the right branch for hit vs. miss
@@ -96,7 +96,7 @@ Run it. It compiles and **fails the assertion** (`Some(groceries)` vs `None`) �
 
 Note the assert style: because `Option<T>` has structural equality and `Category` is a record, `Assert.Equal(Some(groceries), result)` just works — no unwrapping. Also note `None` on the right of `=> None` converts cleanly to `Option<Category>` because that's the declared return type.
 
-### Step 2 — Green: implement `Find`  `[ ]`
+### Step 2 — Green: implement `Find`  `[x]`
 
 Replace the stub body:
 
@@ -244,6 +244,63 @@ public void Optional_TreatsNullAsNone()
 
 ## Notes & questions
 
-_Fill in as you go._
+A key idea from step 2, `Optional<T>` is critical bridge type between the BCL world full or `null` values and the functional, or more accurately, Option, world of `LanguageExt`.
+
+### The BCL ↔ functional bridge (two families, verified against 4.4.9)
+
+Think of it as a conceptual two-way interface. **Lifts** get you *into* the Option world; **eliminators** get you back *out*.
+
+**BCL → `Option` (lifts — total & safe; null/empty/parse-failure all collapse to `None`):**
+
+| BCL absence idiom | Lift |
+|---|---|
+| nullable ref / `Nullable<T>` | `Optional(x)` |
+| empty sequence | `xs.HeadOrNone()` |
+| `TryParse` out-param dance | `parseInt(s)`, `parseDouble`, `parseGuid`, `parseBool`, … |
+| dictionary miss | `Optional(dict.GetValueOrDefault(k))` |
+
+**`Option` → BCL (eliminators — you must say what absence *becomes*):**
+
+| Target | Eliminator |
+|---|---|
+| nullable value type `T?` (`where T : struct`) | `.ToNullable()` |
+| nullable reference | `.IfNoneUnsafe(null)` / `.MatchUnsafe(Some:…, None:…)` |
+| a guaranteed value (safe exit) | `.IfNone(fallback)` / `.Match(Some:…, None:…)` |
+| 0-or-1 collection | `.ToSeq()` / `.ToList()` / `.AsEnumerable()` |
+
+**The asymmetry to internalize:** lifting is frictionless; lowering forces a decision. Any eliminator that can **reintroduce `null`** is suffixed **`Unsafe`** (`IfNoneUnsafe`, `MatchUnsafe`) — the type system flagging that you're stepping back out of the safe world. There is deliberately **no `.Value`** getter. This same lift/eliminate shape recurs for `Either`, `Fin`, and `Validation` in later phases.
+
+### Vocabulary cheat-sheet (new terms)
+
+The big idea: every algebraic type comes as a **matched pair** — ways to *build* a value (introduction) and ways to *use* one (elimination). This duality is from Gentzen's natural-deduction logic (1930s) → Martin-Löf type theory → FP.
+
+| Term | Synonyms | What it means | `Option` examples |
+|---|---|---|---|
+| **Constructor** | introducer, introduction rule, intro form | builds a value of the type ("way in") | `Some`, `None`, `Optional` |
+| **Eliminator** | destructor, fold, catamorphism, case analysis, consumer, observer | consumes/takes apart a value ("way out") | `Match`, `IfNone`, `ToNullable`, `ToSeq` |
+| **Lift (value)** | `pure`, `return`, `unit` | put a plain `A` into a wrapper: `A → Option<A>` | `Some(x)` / `Optional(x)` |
+| **Lift (function)** | functor `map` / `fmap` | make a plain function work on wrapped values: `(A → B) → (Option<A> → Option<B>)` | `.Map(f)` |
+
+Notes to self:
+- **"Destructor" here ≠ C++ destructor.** It just means "a function that consumes/deconstructs a value." (C#'s `Deconstruct` methods are a nod to this.)
+- **`Match` is the fold/catamorphism for `Option`** — the canonical eliminator; everything else (`IfNone`, `ToNullable`, …) can be defined in terms of it.
+- **The true dual of *eliminator* is *constructor***, not "lift." I used "lift" loosely in the bridge table above; precisely, the in/out duality is **introduction ↔ elimination**, and "lift" is the related idea of moving a value or function *into* a wrapped context.
+- Same `bool` you've used forever fits the frame: its constructors are `true`/`false`, its eliminator is `if`/pattern-match.
+
+### Duality (and why Rx is "the dual of LINQ")
+
+**Duality** is a formal idea from **category theory** (the source of most FP vocabulary), not just a metaphor. Model things as *objects* + *arrows* (morphisms); the **dual** of any construction is what you get by **reversing all the arrows** (working in the opposite category `Cᵒᵖ`). Consequences:
+
+- Every concept gets a "co-" partner: product / **co**product, monad / **co**monad, algebra / **co**algebra, limit / **co**limit. The `co-` prefix literally means "the dual of."
+- Theorems come in pairs for free — prove it in `C`, the arrow-reversed version holds in `Cᵒᵖ`.
+
+**Rx really is the categorical dual of LINQ** (Erik Meijer's derivation): reverse the arrows of the *pull* iterator `IEnumerable`/`IEnumerator` and you get the *push* observer `IObservable`/`IObserver`, with `MoveNext → OnNext`, done `→ OnCompleted`, threw `→ OnError`. Not analogy — derivation.
+
+**Ties back to constructor/eliminator:**
+- **Data** — defined by *constructors*, consumed by *folds* (catamorphisms). You build it up. `List`/`IEnumerable` live here; `Option`'s `Match` is on this side.
+- **Codata** — defined by *destructors/observations*, produced by *unfolds* (anamorphisms). You observe it, maybe forever. Streams/`IObservable` live here.
+- Data ↔ codata are duals (initial algebra vs. final coalgebra) — the same arrow-reversal that turns `IEnumerable` into `IObservable`.
+
+Logic angle (the natural-deduction roots): introduction ↔ elimination, ∧ ↔ ∨ (De Morgan), ∀ ↔ ∃ are all dual pairs. Same idea, different category.
 
 -

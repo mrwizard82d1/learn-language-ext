@@ -28,6 +28,5 @@ public sealed class CategoryCatalog
     public CategoryCatalog(IEnumerable<Category> categories) => 
         _byName = categories.ToDictionary(x => x.Name);
     
-    // Deliberately wrong: always misses so first test goes red.
-    public Option<Category> Find(string name) => None;
+    public Option<Category> Find(string name) => Optional(_byName.GetValueOrDefault(name));
 }
