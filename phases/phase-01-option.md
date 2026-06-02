@@ -54,7 +54,7 @@ Kent Beck style — not all required, and order/scope is yours to adjust. Strike
 
 ## Steps
 
-### Step 1 — Red: a known category is found  `[ ]`
+### Step 1 — Red: a known category is found  `[x]`
 
 In `tests/Expenses.Tests/`, create `CategoryCatalogTests.cs`. Define the types **inline** for now, with a deliberately wrong stub so the test fails on an *assertion*, not on compilation:
 
