@@ -129,13 +129,13 @@ public void Find_UnknownCategory_ReturnsNone()
 
 This likely passes **immediately** against the Step 2 implementation. That's expected and fine — triangulation here is confirming the behavior, not driving new code. (If it had failed, you'd have a bug in `Find`.)
 
-### Step 4 — Consume without unwrapping: `IfNone` and `Match`  `[ ]`
+### Step 4 — Consume without unwrapping: `IfNone` and `Match`  `[x]`
 
 The whole point of `Option` is handling both cases at the *use* site. Two tests:
 
 ```csharp
 [Fact]
-public void IfNone_OnMiss_SuppliesFallback()
+public void IfNone_OnMiss_SuppliesFallbacki()
 {
     var catalog = new CategoryCatalog([new Category("Groceries")]);
     var uncategorized = new Category("Uncategorized");
@@ -302,5 +302,31 @@ Notes to self:
 - Data ↔ codata are duals (initial algebra vs. final coalgebra) — the same arrow-reversal that turns `IEnumerable` into `IObservable`.
 
 Logic angle (the natural-deduction roots): introduction ↔ elimination, ∧ ↔ ∨ (De Morgan), ∀ ↔ ∃ are all dual pairs. Same idea, different category.
+
+### `IfNone` vs `IfSome` — a *deliberate* asymmetry (verified, 4.4.9)
+
+They look like a symmetric pair but aren't, and the asymmetry is principled:
+
+| | Signature | Returns | Purpose |
+|---|---|---|---|
+| `IfNone` | `IfNone(A fallback)` / `IfNone(Func<A>)` | **`A`** (a value) | *Extract* — give me the value, or this fallback. Safe eliminator to a bare value. |
+| `IfSome` | `IfSome(Action<A>)` | **`Unit`** | *Side effect* — run this action **only if** `Some`. |
+
+- Value-extraction has exactly **one** natural home: `IfNone`. The fallback parameter belongs on the `None` side because that's the case where you must supply something. `"give me the value if it's None, otherwise…"` has no coherent meaning — so there's no value-returning `IfSome`.
+- `IfSome` is for **effects** when a value is present; it returns `Unit` (LanguageExt's real "no meaningful value", unlike `void`).
+- Want a *symmetric* both-branches construct? That's **`Match`** — both branches return the same type. `IfNone`/`IfSome` are the asymmetric one-sided conveniences; `Match` is the balanced fold.
+
+**`Match` argument order:** with **named** args (`Some:`/`None:`) order is irrelevant — the name binds the branch. Only the **positional** overload is order-sensitive (convention: `Some` first, `None` second). Prefer named.
+
+**`IfNone` has two overloads — eager value vs lazy thunk:**
+
+```csharp
+A IfNone(A noneValue)         // eager: fallback already computed (normal C# arg evaluation)
+A IfNone(Func<A> noneFactory) // lazy: fallback computed ONLY on the None path
+```
+
+- The eager arg is evaluated *before* `IfNone` runs — so a costly default is paid on every call, hit or miss.
+- The `Func<A>` form defers it: invoked only down the `None` branch. Use it when the fallback is expensive / allocates / has side effects (DB, IO, logging). Cheap constant → use the value form.
+- Same eager-vs-thunk pairing recurs across LanguageExt; cf. F# `defaultValue` vs `defaultWith`, Clojure `(or x (expensive))`.
 
 -
