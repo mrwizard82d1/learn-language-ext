@@ -163,45 +163,98 @@ public void Match_RunsTheCorrectBranch()
 
 ### Step 5 — Transform and chain: `Map` and `Bind`  `[ ]`
 
-`Map` transforms the contained value if present, no-op on `None`:
+> **Reweighted on purpose.** You already know `Map` cold, so it gets a 30-second confirmation. `Bind` is the focus — it's the one that's less familiar coming from a Map-heavy background, and it's the engine behind Phase 5's LINQ syntax. Tests use the constructor-hoisted `_catalog` from your Step-4 refactor.
+
+#### 5a — `Map` (quick confirmation)  `[ ]`
+
+Functor map: `A → B`, applied if `Some`, no-op on `None`. Nothing new conceptually — one test to pin the LanguageExt syntax, then move on.
 
 ```csharp
 [Fact]
 public void Map_ProjectsName_AndIsNoOpOnMiss()
 {
-    var catalog = new CategoryCatalog([new Category("Groceries")]);
-
-    Option<string> hit  = catalog.Find("Groceries").Map(c => c.Name);
-    Option<string> miss = catalog.Find("Rent").Map(c => c.Name);
+    Option<string> hit  = _catalog.Find("Groceries").Map(c => c.Name);
+    Option<string> miss = _catalog.Find("Rent").Map(c => c.Name);
 
     Assert.Equal(Some("Groceries"), hit);
     Assert.True(miss.IsNone);
 }
 ```
 
-For `Bind`, you need a second `Option`-returning step to chain. Add a lookup that itself can miss — say, a parent/rollup category — so `Bind` has something to compose:
+#### 5b — `Bind` (the focus)  `[ ]`
+
+First, a second `Option`-returning step to chain — a multi-level category rollup, so we can build chains more than one link long. Add to `CategoryCatalog` (inline for now):
 
 ```csharp
-// Add to CategoryCatalog (inline for now):
 public Option<Category> FindParent(Category c) =>
-    c.Name == "Groceries" ? Optional(new Category("Food")) : None;
+    c.Name switch
+    {
+        "Groceries" => Some(new Category("Food")),
+        "Food"      => Some(new Category("All Spending")),
+        _           => None
+    };
 ```
+
+**Beat 1 — feel the nesting pain.** `FindParent` returns `Option<Category>`. Watch what happens if you `Map` it (a function that *itself* returns an `Option`) versus `Bind` it:
 
 ```csharp
 [Fact]
-public void Bind_ChainsLookups_AndShortCircuitsOnMiss()
+public void Map_OfAnOptionReturningFn_Nests_WhereBindFlattens()
 {
-    var catalog = new CategoryCatalog([new Category("Groceries")]);
+    // Map wraps the function's (already-Option) return in ANOTHER Option:
+    Option<Option<Category>> nested = _catalog.Find("Groceries").Map(_catalog.FindParent);
+    Assert.Equal(Some(Some(new Category("Food"))), nested);   // Option<Option<…>> — nested!
 
-    Option<Category> parentOfHit  = catalog.Find("Groceries").Bind(catalog.FindParent);
-    Option<Category> parentOfMiss = catalog.Find("Rent").Bind(catalog.FindParent);
-
-    Assert.Equal(Some(new Category("Food")), parentOfHit);
-    Assert.True(parentOfMiss.IsNone);   // first lookup missed → whole chain is None
+    // Bind flattens it — Map + flatten:
+    Option<Category> flat = _catalog.Find("Groceries").Bind(_catalog.FindParent);
+    Assert.Equal(Some(new Category("Food")), flat);            // Option<Category> — flat
 }
 ```
 
-`Map` vs `Bind` is exactly the F#/Clojure distinction you know: `Map` takes `A → B`, `Bind` takes `A → Option<B>` and flattens. Reach for `Bind` whenever each step *might itself fail*. (Next phase's LINQ syntax will let you write these chains as `from … select …` — but seeing the explicit `.Bind` first makes the desugaring obvious.)
+That `Option<Option<Category>>` is the whole "aha": **`Bind` = `Map` + flatten.** (You may know `Bind` under other names: `flatMap`, `SelectMany`, `>>=`.)
+
+**The decision rule — make it a reflex:**
+
+| Your function's shape | Use |
+|---|---|
+| `A → B` (returns a *plain* value) | `.Map` |
+| `A → Option<B>` (returns a *wrapped* value) | `.Bind` |
+
+"Does the step I'm chaining *itself* have an absence/failure outcome? → `Bind`."
+
+**Beat 2 — the railway: short-circuit down a multi-link chain.** Any `None` anywhere collapses the rest, with no further work:
+
+```csharp
+[Fact]
+public void Bind_ChainsLookups_AndShortCircuits()
+{
+    // hit → hit → hit : the happy path runs end to end
+    Option<Category> twoUp =
+        _catalog.Find("Groceries").Bind(_catalog.FindParent).Bind(_catalog.FindParent);
+    Assert.Equal(Some(new Category("All Spending")), twoUp);
+
+    // miss at the FIRST step → the rest is skipped entirely
+    Option<Category> missChain =
+        _catalog.Find("Rent").Bind(_catalog.FindParent).Bind(_catalog.FindParent);
+    Assert.True(missChain.IsNone);
+
+    // hit → hit → miss ("All Spending" has no parent) → None
+    Option<Category> hitThenMiss =
+        _catalog.Find("Groceries").Bind(_catalog.FindParent).Bind(_catalog.FindParent).Bind(_catalog.FindParent);
+    Assert.True(hitThenMiss.IsNone);
+}
+```
+
+You write the happy path linearly; the `None` case is handled for free at every link. *That* short-circuiting is the payoff.
+
+**Beat 3 — you already know `Bind`, under other names.** Anchor it to your background:
+
+- **Clojure `some->`** — threads a value through forms, bailing on the first `nil`. That's `Bind`-chaining. You've used `Bind` for years.
+- **JS `Promise.then`** — flattens nested promises instead of handing you `Promise<Promise<T>>`. Monadic bind for `Promise`.
+- **F# `Option.bind`** — literally this.
+- **LINQ `SelectMany`** — *is* `Bind`. This sets up **Phase 5**: `from x in … from y in … select …` desugars to `SelectMany`/`Bind`. Seeing the explicit `.Bind` now makes that query syntax read as pure sugar.
+
+So you're not really *learning* `Bind` — you're recognizing the `some->` / `.then` flattening you already rely on, now spelled `Bind` and made type-safe.
 
 ### Step 6 — Refactor: extract to production code  `[ ]`
 
