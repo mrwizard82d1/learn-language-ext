@@ -329,4 +329,20 @@ A IfNone(Func<A> noneFactory) // lazy: fallback computed ONLY on the None path
 - The `Func<A>` form defers it: invoked only down the `None` branch. Use it when the fallback is expensive / allocates / has side effects (DB, IO, logging). Cheap constant → use the value form.
 - Same eager-vs-thunk pairing recurs across LanguageExt; cf. F# `defaultValue` vs `defaultWith`, Clojure `(or x (expensive))`.
 
+### xUnit shared setup vs NUnit (translation note)
+
+**xUnit has NO `[SetUp]`/`[TearDown]`.** The core rule: a **fresh instance of the test class is constructed for every test method** — so "setup" is the **constructor**, "teardown" is `Dispose()` (`IDisposable`) or `IAsyncLifetime` for async. That per-test-instance rule is what makes isolation automatic.
+
+Three tiers, mapped to pytest `scope=`:
+
+| Need | xUnit | NUnit | pytest |
+|---|---|---|---|
+| Fresh setup per test (default) | **constructor** (+ `Dispose`) | `[SetUp]`/`[TearDown]` | `scope="function"` |
+| One shared instance per **test class** | **`IClassFixture<T>`** (injected via ctor param) | `[OneTimeSetUp]` | `scope="class"` |
+| One shared instance across **many classes** | **`ICollectionFixture<T>`** | — | `scope="module"`/`"session"` |
+
+- `IClassFixture`/`ICollectionFixture` are the true "inject a fixture object" model — xUnit injects them as **constructor parameters**.
+- **Trade-off:** constructor = isolation (fresh per test); class/collection fixtures = sharing (one instance). Sharing is only safe when the fixture is **immutable/read-only**, else tests leak state into each other. Choose by cost vs. isolation, like a pytest scope.
+- Applied here: the `Groceries` catalog is cheap + immutable, so hoisted into the **constructor** (`_catalog`). Each `[Fact]` gets its own instance; per-test locals (`uncategorized`, `factoryCalls`, `seen`) stayed local.
+
 -

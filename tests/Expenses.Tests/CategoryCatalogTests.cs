@@ -1,5 +1,3 @@
-using Xunit.Sdk;
-
 namespace Expenses.Tests;
 
 using LanguageExt;
@@ -7,15 +5,18 @@ using static LanguageExt.Prelude;
 
 public class CategoryCatalogTests
 {
-    private readonly Dictionary<string, Category> _byName;
+    private readonly CategoryCatalog _catalog;
+
+    // ReSharper disable once ConvertConstructorToMemberInitializers
+    public CategoryCatalogTests() => 
+        _catalog = new CategoryCatalog([new Category("Groceries")]);
 
     [Fact]
     public void Find_KnownCategory_ReturnsSome()
     {
         var groceries = new Category("Groceries");
-        var catalog = new CategoryCatalog([groceries]);
 
-        var result = catalog.Find("Groceries");
+        var result = _catalog.Find("Groceries");
         
         Assert.Equal(Some(groceries), result);
     }
@@ -23,9 +24,7 @@ public class CategoryCatalogTests
     [Fact]
     public void Find_UnknownCategory_ReturnsNone()
     {
-        var catalog = new CategoryCatalog([new Category("Groceries")]);
-
-        var result = catalog.Find("Rent");
+        var result = _catalog.Find("Rent");
         
         Assert.True(result.IsNone);
     }
@@ -33,10 +32,9 @@ public class CategoryCatalogTests
     [Fact]
     public void IfNone_OnMiss_SuppliesFallbackValue()
     {
-        var catalog = new CategoryCatalog([new Category("Groceries")]);
         var uncategorized = new Category("Uncategorized");
 
-        var result = catalog.Find("Rent").IfNone(uncategorized);
+        var result = _catalog.Find("Rent").IfNone(uncategorized);
         
         Assert.Equal(uncategorized, result);
     }
@@ -44,7 +42,6 @@ public class CategoryCatalogTests
     [Fact]
     public void IfNone_Factor_IsSkippedOnHit_AndRunOnMiss()
     {
-        var catalog = new CategoryCatalog([new Category("Groceries")]);
         var factoryCalls = 0;
 
         Category MakeDefault()
@@ -54,12 +51,12 @@ public class CategoryCatalogTests
         }
 
         // Runs the function `MakeDefault()` if **not** found.
-        var hit = catalog.Find("Groceries").IfNone(MakeDefault);
+        var hit = _catalog.Find("Groceries").IfNone(MakeDefault);
         Assert.Equal(new Category("Groceries"), hit);
         Assert.Equal(0, factoryCalls); // The point: thunk did **not** run on the `Some` path
         
         // Similarly, runs `MakeDefault()` if and only if `None` returned by `Find`
-        var miss = catalog.Find("Rent").IfNone(MakeDefault);
+        var miss = _catalog.Find("Rent").IfNone(MakeDefault);
         Assert.Equal(new Category("Uncategorized"), miss);
         Assert.Equal(1, factoryCalls); // Ran exactly once only on the `None` path
     }
@@ -69,11 +66,10 @@ public class CategoryCatalogTests
     [Fact]
     public void IfSome_RunsAction_OtherwiseDoesNotRun()
     {
-        var catalog = new CategoryCatalog([new Category("Groceries")]);
         var seen = new List<string>();
 
-        catalog.Find("Groceries").IfSome(c => seen.Add(c.Name)); // runs **and** adds an item
-        catalog.Find("Rent").IfSome(c => seen.Add(c.Name)); // runs but adds **no** item
+        _catalog.Find("Groceries").IfSome(c => seen.Add(c.Name)); // runs **and** adds an item
+        _catalog.Find("Rent").IfSome(c => seen.Add(c.Name)); // runs but adds **no** item
         
         Assert.Equal("Groceries", Assert.Single(seen)); // sees a list with a single item, "Groceries"
     }
@@ -81,11 +77,9 @@ public class CategoryCatalogTests
     [Fact]
     public void Match_Some_SelectsTheSomeBranchAction()
     {
-        var catalog = new CategoryCatalog([new Category("Groceries")]);
-
-        string label = catalog.Find("Groceries")
-                              .Match(Some: c => $"Found: {c.Name}",
-                                     None: () => "Not found");
+        string label = _catalog.Find("Groceries")
+                               .Match(Some: c => $"Found: {c.Name}",
+                                      None: () => "Not found");
         
         Assert.Equal("Found: Groceries", label);
     }
