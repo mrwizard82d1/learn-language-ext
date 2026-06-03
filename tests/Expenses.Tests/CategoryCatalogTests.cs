@@ -17,6 +17,16 @@ public class CategoryCatalogTests
         
         Assert.Equal(Some(groceries), result);
     }
+
+    [Fact]
+    public void Find_UnknownCategory_ReturnsNone()
+    {
+        var catalog = new CategoryCatalog([new Category("Groceries")]);
+
+        var result = catalog.Find("Rent");
+        
+        Assert.True(result.IsNone);
+    }
 }
 
 public sealed record Category(string Name);

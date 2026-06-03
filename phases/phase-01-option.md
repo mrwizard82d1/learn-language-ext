@@ -113,7 +113,7 @@ Why this exact shape — it's the idiomatic LanguageExt move and worth dwelling 
 
 Run — green.
 
-### Step 3 — Triangulate: a missing category returns `None`  `[ ]`
+### Step 3 — Triangulate: a missing category returns `None`  `[x]`
 
 ```csharp
 [Fact]
