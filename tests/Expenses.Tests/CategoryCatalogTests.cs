@@ -93,6 +93,44 @@ public class CategoryCatalogTests
         var miss = _catalog.Find("Rent").Map(c => c.Name);
         Assert.True(miss.IsNone);
     }
+
+    [Fact]
+    public void Map_OfAnOptionReturningFunc_Nests_WhereBindFlattens()
+    {
+        // Map wraps the function's (already-`Option`) return in **another** `Option`:
+        var nested = _catalog.Find("Groceries").Map(_catalog.FindParent);
+        Assert.Equal(Some(Some(new Category("Food"))), nested); // nested: Option<<Option<...>>
+        
+        // Bind flattens it - Map + flatten
+        var flat = _catalog.Find("Groceries").Bind(_catalog.FindParent);
+        Assert.Equal(Some (new Category("Food")), flat); // flat - Option<Category>
+    }
+
+    [Fact]
+    public void Bind_ChainsLookups_AndShortCircuits()
+    {
+        // hit -> hit -> hit: the happy path runs to the end
+        var twoUp = 
+            _catalog.Find("Groceries")
+                    .Bind(_catalog.FindParent)
+                    .Bind(_catalog.FindParent);
+        Assert.Equal(Some(new Category("All Spending")), twoUp);
+        
+        // miss at the **first** step -> the rest is skipped entirely
+        var missChain = 
+            _catalog.Find("Rant")
+                    .Bind(_catalog.FindParent)
+                    .Bind(_catalog.FindParent);
+        Assert.True(missChain.IsNone);
+        
+        // hit -> hit -> hit -> miss ("All Spending" has no parent) -> None
+        var hitThenMiss =
+            _catalog.Find("Groceries")
+                    .Bind(_catalog.FindParent)
+                    .Bind(_catalog.FindParent)
+                    .Bind(_catalog.FindParent);
+        Assert.True(hitThenMiss.IsNone);
+    }
 }
 
 public sealed record Category(string Name);
@@ -105,4 +143,12 @@ public sealed class CategoryCatalog
         _byName = categories.ToDictionary(x => x.Name);
     
     public Option<Category> Find(string name) => Optional(_byName.GetValueOrDefault(name));
+
+    public Option<Category> FindParent(Category c) =>
+        c.Name switch
+        {
+            "Groceries" => Some(new Category("Food")),
+            "Food" => Some(new Category("All Spending")),
+            _ => None
+        };
 }

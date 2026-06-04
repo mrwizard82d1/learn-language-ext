@@ -161,7 +161,7 @@ public void Match_RunsTheCorrectBranch()
 
 `IfNone` is your `Option.defaultValue` (F#) / `(get m k default)` (Clojure) / `?? fallback` (C#). `Match` is the explicit two-branch fold — the C# stand-in for F#'s `match … with`. Note `Match` here *returns* a value (an expression); there's also a statement form with `Action` branches when you want side effects.
 
-### Step 5 — Transform and chain: `Map` and `Bind`  `[ ]`
+### Step 5 — Transform and chain: `Map` and `Bind`  `[x]`
 
 > **Reweighted on purpose.** You already know `Map` cold, so it gets a 30-second confirmation. `Bind` is the focus — it's the one that's less familiar coming from a Map-heavy background, and it's the engine behind Phase 5's LINQ syntax. Tests use the constructor-hoisted `_catalog` from your Step-4 refactor.
 
@@ -181,7 +181,7 @@ public void Map_ProjectsName_AndIsNoOpOnMiss()
 }
 ```
 
-#### 5b — `Bind` (the focus)  `[ ]`
+#### 5b — `Bind` (the focus)  `[x]`
 
 First, a second `Option`-returning step to chain — a multi-level category rollup, so we can build chains more than one link long. Add to `CategoryCatalog` (inline for now):
 
@@ -397,5 +397,67 @@ Three tiers, mapped to pytest `scope=`:
 - `IClassFixture`/`ICollectionFixture` are the true "inject a fixture object" model — xUnit injects them as **constructor parameters**.
 - **Trade-off:** constructor = isolation (fresh per test); class/collection fixtures = sharing (one instance). Sharing is only safe when the fixture is **immutable/read-only**, else tests leak state into each other. Choose by cost vs. isolation, like a pytest scope.
 - Applied here: the `Groceries` catalog is cheap + immutable, so hoisted into the **constructor** (`_catalog`). Each `[Fact]` gets its own instance; per-test locals (`uncategorized`, `factoryCalls`, `seen`) stayed local.
+
+### `Assert.Equal` on `Option` renders as `[[…]]` — why, and the fix
+
+**Cause:** `Option<T>` implements `IEnumerable<T>` (the 0-or-1 sequence — same trait behind `.ToSeq()`). So `Assert.Equal(expected, actual)` on two `Option`s binds to xUnit's **`Assert.Equal<T>(IEnumerable<T>, IEnumerable<T>)`** collection overload, whose **collection formatter** prints `[[…]]` (doubly-nested for `Option<Option<…>>`, since the inner element is itself enumerable). The pass/fail verdict is still correct — only the *failure rendering* is unhelpful.
+
+**Key fact:** LanguageExt's own `Option.ToString()` is readable:
+
+```
+Some(Category { Name = Food })          // Option<Category>
+Some(Some(Category { Name = Food }))    // Option<Option<Category>>
+None
+```
+
+**Fix (debug-time reach-tool, not committed style):** when a confusing red appears, assert on the readable string instead — gives a normal string diff:
+
+```csharp
+Assert.Equal("Some(Some(Category { Name = Food }))", nested.ToString());
+```
+
+- Don't commit `ToString`-matching as your normal assert style (brittle, couples to the format). Keep plain `Assert.Equal(...)` in green tests; it's correct, and the ugly output only shows on failure.
+- **General lesson:** *any* LanguageExt type that's `IEnumerable` (`Option`, `Either`, `Fin`, `Validation`, the collections) gets this collection-formatter treatment from `Assert.Equal`. Reach for `ToString()` when a diff matters.
+- **TODO (Phase 2, step 0):** build a small `OptionAssert.Equal`-style test helper that fails legibly via `ToString()` — *deferred on purpose* until `Either`/`Fin`/`Validation` exist, so it can be designed once across all the enumerable wrapper types rather than blind. (Memory reminder set.)
+
+### `Flatten` / `join`, and `Bind = Map + Flatten` (verified, 4.4.9)
+
+Three operations, one family:
+
+| Op | Shape | Role |
+|---|---|---|
+| `Map` (functor) | `(A → B) → Option<A> → Option<B>` | apply a *plain* function inside the wrapper |
+| `Bind` (monad) | `(A → Option<B>) → Option<A> → Option<B>` | chain a function that *itself* returns a wrapper |
+| `Flatten` / `flatten` (= `join`, the monad's **μ**) | `Option<Option<A>> → Option<A>` | collapse **exactly one** layer |
+
+The identities (both verified):
+- **`Bind(f) = Flatten(Map(f))`** — bind is "map, then collapse the one layer map created."
+- **`Flatten = Bind(x => x)`** — flatten *is* bind with the identity function (`join = bind id`). `triple.Bind(x => x)` ≡ `triple.Flatten()`.
+
+`Flatten` exists as both `opt.Flatten()` and Prelude `flatten(opt)`. It removes **one** layer, so `Option<Option<Option<A>>>` needs two: `.Flatten().Flatten()`.
+
+**No arbitrary-depth flatten exists — and can't, type-safely:** nesting depth lives *in the type*, so a single op collapsing any depth to `Option<T>` would need type-level recursion C# can't express. Practical rule: **don't accumulate nesting in the first place** — chain with `Bind` (not `Map`) whenever a step returns an `Option`, and you stay flat at `Option<T>` the whole way. `Flatten` is "the thing `Bind` is built from" more than a daily tool.
+
+### Two worlds: "normal" vs "elevated" — which operator, when (Scott Wlaschin)
+
+The mental model behind the `Map`-vs-`Bind` decision rule. Wlaschin frames it as **two worlds**:
+
+- **Normal world** — ordinary values/types: `string`, `int`, `Category`.
+- **Elevated world** — wrapped/generic types: `Option<Category>`, `Either<_,_>`, `List<_>`.
+
+Operators are categorized by *which worlds their function touches*:
+
+| You have a function… | …of shape | Use | (Wlaschin's name) |
+|---|---|---|---|
+| normal → normal | `A → B` | **`Map`** | applies a normal-world fn to an elevated value |
+| normal → elevated ("world-crossing") | `A → Option<B>` | **`Bind`** | chains a *world-crossing / monadic / switch* function |
+| lift a bare value up | `A → Option<A>` | `Some` / `Optional` (`return`/`pure`) | enters the elevated world |
+| come back down | `Option<A> → A` | `Match` / `IfNone` (eliminators) | leaves the elevated world |
+
+**The discipline you intuited:** once you're in the elevated world, *stay there* — keep composing with `Bind` and let each step "do one thing" (a single world-crossing operation); only **unwrap at the very end**. `Bind` already gives you single-responsibility composition for free — it handles the staying-elevated + short-circuit plumbing so each function needn't. (This is the same insight as **Railway Oriented Programming**: `Bind` adapts "switch functions" so they compose along the happy track.)
+
+References (verified 2026-06):
+- *"Map and Bind and Apply, Oh my!"* series — landing: https://fsharpforfunandprofit.com/series/map-and-bind-and-apply-oh-my/ ; first post *"Understanding map and apply"* (02 Aug 2015): https://fsharpforfunandprofit.com/posts/elevated-world/ ; *"Understanding bind"*: https://fsharpforfunandprofit.com/posts/elevated-world-2/
+- *Railway Oriented Programming* — hub: https://fsharpforfunandprofit.com/rop/ ; canonical post (11 May 2013): https://fsharpforfunandprofit.com/posts/recipe-part2/
 
 -
