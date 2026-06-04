@@ -268,7 +268,7 @@ Now that it's green, do the first refactor: move `Category` and `CategoryCatalog
 
 This is the rhythm for every phase: prove behavior with inline types under test, then lift them into production once green.
 
-### Step 7 — Pin the nullable-bridge gotcha  `[ ]` *(short)*
+### Step 7 — Pin the nullable-bridge gotcha  `[x]` *(short)*
 
 Lock in the `Optional` semantics with a tiny direct test, so the "why not `Some`?" lesson is documented in code:
 

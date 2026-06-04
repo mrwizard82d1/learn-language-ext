@@ -25,7 +25,7 @@ By the end you should be able to:
 ## Phases
 
 - [x] Phase 0 — Setup
-- [ ] Phase 1 — `Option<T>` the LanguageExt way
+- [x] Phase 1 — `Option<T>` the LanguageExt way
 - [ ] Phase 2 — `Either<L, R>` and `Fin<T>`
 - [ ] Phase 3 — `Validation<F, S>`
 - [ ] Phase 4 — Persistent collections (LanguageExt flavor)

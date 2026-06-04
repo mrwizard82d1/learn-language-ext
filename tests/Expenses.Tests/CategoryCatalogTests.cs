@@ -130,4 +130,17 @@ public class CategoryCatalogTests
                     .Bind(_catalog.FindParent);
         Assert.True(hitThenMiss.IsNone);
     }
+
+    [Fact]
+    public void Optional_TreatsNullAsNone()
+    {
+        string? missing = null;
+        const string present = "x";
+        
+        // `Optional(x).IsNone` returns true iff x == `null`
+        Assert.True(Optional(missing).IsNone);
+        
+        // `Optional(x).Equals(Some(x))` iff x != `null`
+        Assert.Equal(Some("x"), Optional(present));
+    }
 }
