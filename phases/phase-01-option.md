@@ -256,7 +256,7 @@ You write the happy path linearly; the `None` case is handled for free at every 
 
 So you're not really *learning* `Bind` — you're recognizing the `some->` / `.then` flattening you already rely on, now spelled `Bind` and made type-safe.
 
-### Step 6 — Refactor: extract to production code  `[ ]`
+### Step 6 — Refactor: extract to production code  `[x]`
 
 Now that it's green, do the first refactor: move `Category` and `CategoryCatalog` out of the test file into `src/Expenses`.
 

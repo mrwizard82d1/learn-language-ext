@@ -1,6 +1,5 @@
 namespace Expenses.Tests;
 
-using LanguageExt;
 using static LanguageExt.Prelude;
 
 public class CategoryCatalogTests
@@ -131,24 +130,4 @@ public class CategoryCatalogTests
                     .Bind(_catalog.FindParent);
         Assert.True(hitThenMiss.IsNone);
     }
-}
-
-public sealed record Category(string Name);
-
-public sealed class CategoryCatalog
-{
-    private readonly Dictionary<string, Category> _byName;
-    
-    public CategoryCatalog(IEnumerable<Category> categories) => 
-        _byName = categories.ToDictionary(x => x.Name);
-    
-    public Option<Category> Find(string name) => Optional(_byName.GetValueOrDefault(name));
-
-    public Option<Category> FindParent(Category c) =>
-        c.Name switch
-        {
-            "Groceries" => Some(new Category("Food")),
-            "Food" => Some(new Category("All Spending")),
-            _ => None
-        };
 }
