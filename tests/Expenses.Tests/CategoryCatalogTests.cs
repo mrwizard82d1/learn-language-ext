@@ -83,6 +83,16 @@ public class CategoryCatalogTests
         
         Assert.Equal("Found: Groceries", label);
     }
+
+    [Fact]
+    public void Map_ProjectsName_AndIsNoOpOnMiss()
+    {
+        var hit = _catalog.Find("Groceries").Map(c => c.Name);
+        Assert.Equal(Some("Groceries"), hit);
+        
+        var miss = _catalog.Find("Rent").Map(c => c.Name);
+        Assert.True(miss.IsNone);
+    }
 }
 
 public sealed record Category(string Name);

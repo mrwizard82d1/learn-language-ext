@@ -165,7 +165,7 @@ public void Match_RunsTheCorrectBranch()
 
 > **Reweighted on purpose.** You already know `Map` cold, so it gets a 30-second confirmation. `Bind` is the focus — it's the one that's less familiar coming from a Map-heavy background, and it's the engine behind Phase 5's LINQ syntax. Tests use the constructor-hoisted `_catalog` from your Step-4 refactor.
 
-#### 5a — `Map` (quick confirmation)  `[ ]`
+#### 5a — `Map` (quick confirmation)  `[x]`
 
 Functor map: `A → B`, applied if `Some`, no-op on `None`. Nothing new conceptually — one test to pin the LanguageExt syntax, then move on.
 
