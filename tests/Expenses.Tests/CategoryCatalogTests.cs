@@ -19,7 +19,7 @@ public class CategoryCatalogTests
 
         var result = _catalog.Find("Groceries");
         
-        Assert.Equal(Some(groceries), result);
+        LangExtAssert.Equal(groceries, result);
     }
 
     [Fact]
@@ -78,9 +78,9 @@ public class CategoryCatalogTests
     [Fact]
     public void Match_Some_SelectsTheSomeBranchAction()
     {
-        string label = _catalog.Find("Groceries")
-                               .Match(Some: c => $"Found: {c.Name}",
-                                      None: () => "Not found");
+        var label = _catalog.Find("Groceries")
+                            .Match(Some: c => $"Found: {c.Name}",
+                                   None: () => "Not found");
         
         Assert.Equal("Found: Groceries", label);
     }
@@ -89,10 +89,10 @@ public class CategoryCatalogTests
     public void Map_ProjectsName_AndIsNoOpOnMiss()
     {
         var hit = _catalog.Find("Groceries").Map(c => c.Name);
-        Assert.Equal(Some("Groceries"), hit);
+        LangExtAssert.Equal(Some("Groceries"), hit);
         
         var miss = _catalog.Find("Rent").Map(c => c.Name);
-        Assert.True(miss.IsNone);
+        LangExtAssert.Equal(None, miss);
     }
 
     [Fact]
@@ -100,11 +100,11 @@ public class CategoryCatalogTests
     {
         // Map wraps the function's (already-`Option`) return in **another** `Option`:
         var nested = _catalog.Find("Groceries").Map(_catalog.FindParent);
-        Assert.Equal(Some(Some(new Category("Food"))), nested); // nested: Option<<Option<...>>
+        LangExtAssert.Equal(Some(Some(new Category("Food"))), nested); // nested: Option<<Option<...>>
         
         // Bind flattens it - Map + flatten
         var flat = _catalog.Find("Groceries").Bind(_catalog.FindParent);
-        Assert.Equal(Some (new Category("Food")), flat); // flat - Option<Category>
+        LangExtAssert.Equal(Some (new Category("Food")), flat); // flat - Option<Category>
     }
 
     [Fact]

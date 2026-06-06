@@ -459,5 +459,3 @@ Operators are categorized by *which worlds their function touches*:
 References (verified 2026-06):
 - *"Map and Bind and Apply, Oh my!"* series — landing: https://fsharpforfunandprofit.com/series/map-and-bind-and-apply-oh-my/ ; first post *"Understanding map and apply"* (02 Aug 2015): https://fsharpforfunandprofit.com/posts/elevated-world/ ; *"Understanding bind"*: https://fsharpforfunandprofit.com/posts/elevated-world-2/
 - *Railway Oriented Programming* — hub: https://fsharpforfunandprofit.com/rop/ ; canonical post (11 May 2013): https://fsharpforfunandprofit.com/posts/recipe-part2/
-
--

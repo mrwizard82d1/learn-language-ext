@@ -1,6 +1,6 @@
 namespace Expenses.Tests;
 
-public class LangExtAssert
+public static class LangExtAssert
 {
     // Structural-equality assert that renders failures via ToString() instead
     // xUnit's IEnumerable collection formatter (the `[[...]]` "dump"). Works
