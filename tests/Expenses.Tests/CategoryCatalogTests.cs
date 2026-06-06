@@ -1,3 +1,5 @@
+using LanguageExt;
+
 namespace Expenses.Tests;
 
 using static LanguageExt.Prelude;
@@ -142,5 +144,47 @@ public class CategoryCatalogTests
         
         // `Optional(x).Equals(Some(x))` iff x != `null`
         Assert.Equal(Some("x"), Optional(present));
+    }
+
+    [Fact]
+    public void Filter_KeepsSomeIfPredicatePasses_ElseNone()
+    {
+        var kept = _catalog.Find("Groceries").Filter(c => c.Name.StartsWith("Groceries"));
+        Assert.Equal(Some(new Category("Groceries")), kept);
+        
+        // Value existed but failed the predicate results in `None`
+        var rejected = _catalog.Find("Groceries").Filter(c => c.Name.Length > 100);
+        Assert.True(rejected.IsNone);
+        
+        // If already `None`, stays `None`
+        var miss = _catalog.Find("Rent").Filter(_ => true);
+        Assert.True(miss.IsNone);
+    }
+
+    [Fact]
+    public void Case_EnablesCSharpPatternSwitch()
+    {
+        // ReSharper disable once MoveLocalFunctionAfterJumpStatement
+        string Describe(Option<Category> o) =>
+        o.Case switch
+        {
+            Category c => $"Found '{c.Name}'",
+            _ => "None"
+        };
+        
+        Assert.Equal("Found 'Groceries'", Describe(_catalog.Find("Groceries")));
+        Assert.Equal("None", Describe(_catalog.Find("Rent")));
+    }
+
+    [Fact]
+    public void Option_InteropsWithNullableValuesAndEnumerable()
+    {
+        // `ToNullable`: VALUE types only (Option<int> -> int?). Some -> value; None -> null.
+        Assert.Equal(5, Some(5).ToNullable());
+        Assert.Null(((Option<int>)None).ToNullable());
+        
+        // Option as a sequence with 0-or-1 item
+        Assert.Equal(["Groceries"], _catalog.Find("Groceries").Map(c => c.Name).AsEnumerable());
+        Assert.Empty(_catalog.Find("Rent").AsEnumerable());
     }
 }
