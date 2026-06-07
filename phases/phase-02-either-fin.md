@@ -69,7 +69,7 @@ Kent Beck style — adjust freely.
 
 ## Steps
 
-### Step 1 — Red → Green: `ParseAmount` with `Either`  `[ ]`
+### Step 1 — Red → Green: `ParseAmount` with `Either`  `[x]`
 
 Create `tests/Expenses.Tests/ExpenseParserTests.cs`. Define the parser **inline** with a deliberately-wrong stub so the first test fails on an *assertion*:
 

@@ -6,10 +6,11 @@ using static LanguageExt.Prelude;
 
 public static class ExpenseParser
 {
-    // Deliberately wrong: always fails, so the first test goes red on
-    // assertion.
-    public static Either<string, decimal> ParseAmount(string s) => 
-        Left($"Bad amount: '{s}'");
+    // Correct behavior.
+    public static Either<string, decimal> ParseAmount(string s) =>
+        decimal.TryParse(s, NumberStyles.Number, CultureInfo.InvariantCulture, out var d) 
+            ? Right(d) 
+            : Left($"Bad amount: '{s}'");
 }
 public class ExpenseParserTests
 {
