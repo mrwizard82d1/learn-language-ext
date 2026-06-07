@@ -13,7 +13,7 @@
 
 ## Goal
 
-Parse raw expense input into typed fields where **failure is a value, not an exception**. Where Phase 1's `Option` said "present or absent" (absence carrying *no* information), `Either`/`Fin` say "succeeded **with a value**, or failed **with a reason**." Then compose several fallible parses so the **first failure short-circuits** the rest.
+Parse raw expense input into typed fields where **failure is a value, not an exception**. Where Phase 1's `Option` said "present or absent" (absence carrying *no* information), `Either`/`Fin` ([new term — see *What `Fin` means*](#what-fin-means)) say "succeeded **with a value**, or failed **with a reason**." Then compose several fallible parses so the **first failure short-circuits** the rest.
 
 This phase also sets up the contrast that drives Phase 3: `Either`/`Fin` **short-circuit** on the first error; `Validation` (Phase 3) **accumulates** all errors. Same problem, two strategies.
 
@@ -287,6 +287,24 @@ public void Conversions_BetweenFin_Either_Option()
 
 ## Notes & questions
 
-_Fill in as you go._
+### What `Fin` means
+
+`Fin` is a **new term** — it has no direct F#/Clojure equivalent (F# uses `Result<'T,'TError>` = `Ok`/`Error`; there's no type called "Fin"). So here's the verified background, for future-me reading top to bottom.
+
+**Author's own doc comment** on the `Fin<A>` type (Paul Louth / louthy), verbatim:
+
+> "Equivalent of `Either<Error, A>`. Called `Fin` because this should be used as the **concrete result of a computation**."
+
+So:
+- **Meaning (author-stated):** `Fin` = the **concrete / final result of a computation** — either `Succ(value)` or `Fail(Error)`.
+- **Shape:** equivalent to `Either<Error, A>`. Cases are **`Succ` / `Fail`**; the error is pinned to **`LanguageExt.Common.Error`**.
+- **Where the name comes from in the wider library:** when you *run* an effect (`Eff<A>` / `Aff<A>` — the "deep end" this tutorial skips), the result you get back is a `Fin<A>`. It's literally "what's left when the computation **finishes**." But we use it standalone as a plain synchronous *result-or-error* type.
+- **Mental model for this phase:** `Fin<DateOnly>` reads as *"parsing's concrete result: a `DateOnly`, or an `Error`."*
+
+**Honest caveat on etymology:** I initially glossed `Fin` as "finish / French *fin* = the end." That reading is *plausible and almost certainly the intent* — but the author never literally writes "finish"; the only on-record statement is "concrete result of a computation." So treat "finish/final" as a helpful interpretation, not a quoted definition.
+
+**When `Fin` vs `Either<L,R>`:** `Fin` when the left is "an error" (message/exception/code — the common case). `Either<L,R>` when the left is your own domain type and you want the compiler to track that specific type.
+
+Sources (verified 2026-06): louthy's `Fin.cs` doc comment (gist `a402c57393b99915e845a37db36252cd`); wiki ["How to deal with side effects"](https://github.com/louthy/language-ext/wiki/How-to-deal-with-side-effects) ("The `Fin` monad is equivalent to `Either<Error, A>`" and "When the `Aff` and `Eff` monads run, they result in a `Fin<A>`"). This is the **v4.x** lineage (our 4.4.9).
 
 -
