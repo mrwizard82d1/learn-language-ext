@@ -24,4 +24,30 @@ public class ExpenseParserTests
         
         LangExtAssert.Equal(Right<string, decimal>(12.50m), result);
     }
+
+    [Fact]
+    public void ParseAmount_GarbageAmount_ReturnsLeft()
+    {
+        var result = ExpenseParser.ParseAmount("12.50USD");
+        
+        LangExtAssert.Equal(Left<string, decimal>("Bad amount: '12.50USD'"), result);
+    }
+
+    [Fact]
+    public void Either_Match_And_IfLeft()
+    {
+        var ok = ExpenseParser.ParseAmount("3")
+                              .Match(Right: a => $"Ok {a}",
+                                     Left: e => $"Err {e}");
+
+        var bad = ExpenseParser.ParseAmount("x")
+                               .Match(Right: a => $"Ok {a}",
+                                      Left: e => $"Err {e}");
+
+        var fallback = ExpenseParser.ParseAmount("x").IfLeft(0m);
+        
+        Assert.Equal("Ok 3", ok);
+        Assert.Equal($"Err Bad amount: 'x'", bad);
+        Assert.Equal(0m, fallback);
+    }
 }

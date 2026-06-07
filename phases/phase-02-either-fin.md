@@ -112,7 +112,7 @@ Notes:
 - The ternary's two branches are `Right(d)` (`EitherRight<decimal>`) and `Left(...)` (`EitherLeft<string>`); both **target-type** to the method's `Either<string, decimal>` return — same target-typed-conditional mechanism you saw with `Option` in Phase 1.
 - In the *test*, `Right<string, decimal>(12.50m)` needs the explicit type args because there's no left value to infer `L` from. (Inside `ParseAmount`, the return type supplies it.)
 
-### Step 2 — Triangulate + consume: `Left`, `Match`, `IfLeft`  `[ ]`
+### Step 2 — Triangulate + consume: `Left`, `Match`, `IfLeft`  `[x]`
 
 ```csharp
 [Fact]
