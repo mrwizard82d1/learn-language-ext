@@ -24,7 +24,7 @@ public class Library
 {
     public Option<Book> FindByIsbn(Isbn sought)
     {
-        return Option<Book>.Some(new Book("1-966401-72-8", "rem doloremque ea"));
+        return Option<Book>.None;
     }
 }
 
