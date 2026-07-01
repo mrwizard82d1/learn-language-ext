@@ -2,6 +2,11 @@
 
 > A **self-directed** refresher in a *different* domain from the expense tracker. The point isn't to follow steps — it's to **solve a small problem and reach for `Option` / `Either` / `Fin` where they fit**, using your own Notes and asking questions as needed.
 
+## Progress / resume point
+
+- **Task 1 — in progress.** `KataLibraryTests.cs` created; `record Book`, a `Library` with `FindByIsbn → Option<Book>`, and a **miss→None** test are green (22 tests total). `Isbn` is a `using Isbn = string;` alias (not a distinct type — fine for now).
+- **▶ Resume here:** add the **hit test first** — put a book in the `Library`, `FindByIsbn(itsIsbn)` → assert `Some(book)`. Against the current always-`None` stub that's a *real* red (the miss-first test couldn't force an implementation). Then green it with a real catalog: `Dictionary` keyed by ISBN + the `Optional(dict.GetValueOrDefault(...))` bridge. The existing miss test becomes triangulation. Then → Task 2.
+
 ## Rules of engagement
 
 - **Less guided on purpose.** Below are *requirements* and gentle hints about where each concept tends to fit — not code to copy. You design the types and signatures.
