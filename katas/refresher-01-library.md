@@ -13,7 +13,7 @@
 ## Setup (low friction)
 
 Easiest: add a new test file in the existing test project so LanguageExt + `LangExtAssert` just work:
-`tests/Expenses.Tests/Kata_Library.cs` (define the kata types *inline* there, same as you did for `CategoryCatalog`). It's throwaway practice — delete it later, or keep it. (If you'd rather a clean project, say so and I'll set one up.)
+`tests/Expenses.Tests/KataLibraryTests.cs` (define the kata types *inline* there, same as you did for `CategoryCatalog`). It's throwaway practice — delete it later, or keep it. (If you'd rather a clean project, say so and I'll set one up.)
 
 Top of the file you'll likely want:
 ```csharp
