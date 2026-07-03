@@ -4,8 +4,8 @@
 
 ## Progress / resume point
 
-- **Task 1 — in progress.** `KataLibraryTests.cs` created; `record Book`, a `Library` with `FindByIsbn → Option<Book>`, and a **miss→None** test are green (22 tests total). `Isbn` is a `using Isbn = string;` alias (not a distinct type — fine for now).
-- **▶ Resume here:** add the **hit test first** — put a book in the `Library`, `FindByIsbn(itsIsbn)` → assert `Some(book)`. Against the current always-`None` stub that's a *real* red (the miss-first test couldn't force an implementation). Then green it with a real catalog: `Dictionary` keyed by ISBN + the `Optional(dict.GetValueOrDefault(...))` bridge. The existing miss test becomes triangulation. Then → Task 2.
+- **Task 1 — ✅ done.** `KataLibraryTests.cs`: `record Book`, `Library` with `AddBook` + `FindByIsbn(isbn) => Optional(_books.GetValueOrDefault(sought))`, hit + miss tests green. `Isbn` is a `using Isbn = string;` alias (not distinct — deferred). Chose to keep `Dictionary` + `Optional` bridge now, revisit `Map<K,V>` in Phase 4 (staggered learning). Noted: the `Optional(GetValueOrDefault)` idiom relies on `Book` being a *reference* type; a `record struct` would break the `None` case.
+- **▶ Resume here — Task 2:** `ParseIsbn(string raw) → Fin<...>`. Graduate `Isbn` from a `using`-alias into a **real type** — a `readonly record struct Isbn` with a **smart constructor** `static Fin<Isbn> Create(string raw)` that validates (e.g. strip hyphens/space, require 13 digits) and returns `FinSucc`/`FinFail(Error.New(...))`. "Parse, don't validate." Failure is a *value* (`Error`), not an exception.
 
 ## Rules of engagement
 
