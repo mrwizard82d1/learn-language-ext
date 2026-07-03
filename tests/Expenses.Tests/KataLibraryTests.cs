@@ -1,6 +1,7 @@
 namespace Expenses.Tests;
 
 using LanguageExt;
+using LanguageExt.Common; // Error
 using static LanguageExt.Prelude; // "Undecorated" Some/None/Right/Left/FinSucc/FinFail/Optional...
 
 public class KataLibraryTests
@@ -27,6 +28,16 @@ public class KataLibraryTests
         var foundBook = library.FindByIsbn(isbn);
         
         LangExtAssert.Equal(Option<Book>.Some(book), foundBook);
+    }
+
+    [Fact]
+    public void BadlyFormedIsbn_CreateIsbn_ReturnsFinFail()
+    {
+        var candidateIsbn = "";
+        
+        var maybeIsbn = Isbn.Create(candidateIsbn);
+
+        LangExtAssert.Equal(FinFail<Isbn>(Error.New(candidateIsbn)), maybeIsbn);
     }
 }
 
@@ -58,7 +69,11 @@ public class Library
         Optional(_books.GetValueOrDefault(sought));
 }
 
-public record struct Isbn(string Value);
+public record struct Isbn(string Value)
+{
+    // Factory method to construct an instance from a string.
+    public static Fin<Isbn> Create(string candidateIsbn) => FinFail<Isbn>(Error.New("todo"));
+}
 
 public record Book(Isbn Id, string Title);
 
