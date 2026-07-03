@@ -18,10 +18,30 @@ public class KataLibraryTests
         
         LangExtAssert.Equal(Option<Book>.None, foundBook);
     }
+
+    [Fact]
+    public void BookInLibrary_FindBookByIsbn_ReturnsSome()
+    {
+        var library = new Library();
+        var isbn = new Isbn("978-0-8074-3807-7");
+        var book = new Book(isbn, "maiores occaecati sed");
+        library.AddBook(book);
+        
+        var foundBook = library.FindByIsbn(isbn);
+        
+        LangExtAssert.Equal(Option<Book>.Some(book), foundBook);
+    }
 }
 
 public class Library
 {
+    private readonly Dictionary<Isbn, Book> _books = new();
+
+    public void AddBook(Book book)
+    {
+        _books.Add(book.Id, book);
+    }
+
     public Option<Book> FindByIsbn(Isbn sought)
     {
         return Option<Book>.None;
