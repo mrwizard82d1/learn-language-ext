@@ -3,9 +3,6 @@ namespace Expenses.Tests;
 using LanguageExt;
 using static LanguageExt.Prelude; // "Undecorated" Some/None/Right/Left/FinSucc/FinFail/Optional...
 
-// A "type alias" 
-using Isbn = string;
-
 public class KataLibraryTests
 {
     [Fact]
@@ -60,6 +57,8 @@ public class Library
     public Option<Book> FindByIsbn(Isbn sought)  => 
         Optional(_books.GetValueOrDefault(sought));
 }
+
+public record struct Isbn(string Value);
 
 public record Book(Isbn Id, string Title);
 
