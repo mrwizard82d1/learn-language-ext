@@ -31,13 +31,23 @@ public class KataLibraryTests
     }
 
     [Fact]
-    public void BadlyFormedIsbn_CreateIsbn_ReturnsFinFail()
+    public void BadlyFormedIsbnText_CreateIsbn_ReturnsFinFail()
     {
         var candidateIsbn = "";
         
         var maybeIsbn = Isbn.Create(candidateIsbn);
 
         LangExtAssert.Equal(FinFail<Isbn>(Error.New(candidateIsbn)), maybeIsbn);
+    }
+
+    [Fact]
+    public void ValidIsbnText_CreateIsbn_ReturnsFin()
+    {
+        var candidateIsbn = "978-0-06-346001-0";
+        
+        var maybeIsbn = Isbn.Create(candidateIsbn);
+
+        LangExtAssert.Equal(FinSucc(new Isbn(candidateIsbn)), maybeIsbn);
     }
 }
 
