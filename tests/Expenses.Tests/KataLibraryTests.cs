@@ -44,7 +44,15 @@ public class Library
 
     public Option<Book> FindByIsbn(Isbn sought)
     {
-        return Option<Book>.None;
+        
+        if (_books.TryGetValue(sought, out var book))
+        {
+            return Some<Book>(book);
+        }
+        else
+        {
+            return Option<Book>.None;
+        }
     }
 }
 
