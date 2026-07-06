@@ -5,7 +5,12 @@
 ## Progress / resume point
 
 - **Task 1 — ✅ done.** `KataLibraryTests.cs`: `record Book`, `Library` with `AddBook` + `FindByIsbn(isbn) => Optional(_books.GetValueOrDefault(sought))`, hit + miss tests green. `Isbn` is a `using Isbn = string;` alias (not distinct — deferred). Chose to keep `Dictionary` + `Optional` bridge now, revisit `Map<K,V>` in Phase 4 (staggered learning). Noted: the `Optional(GetValueOrDefault)` idiom relies on `Book` being a *reference* type; a `record struct` would break the `None` case.
-- **▶ Resume here — Task 2:** `ParseIsbn(string raw) → Fin<...>`. Graduate `Isbn` from a `using`-alias into a **real type** — a `readonly record struct Isbn` with a **smart constructor** `static Fin<Isbn> Create(string raw)` that validates (e.g. strip hyphens/space, require 13 digits) and returns `FinSucc`/`FinFail(Error.New(...))`. "Parse, don't validate." Failure is a *value* (`Error`), not an exception.
+- **Task 2 — in progress.** `Isbn` graduated to a `readonly record struct` with a **private ctor** + `static Fin<Isbn> Create(string)` (strip non-digits, require 13 → `FinSucc`/`FinFail(Error.New(...))`). Needs `using LanguageExt.Common;`. Mid-refactor: wiring the strong `Isbn` type through `Book`/`Library`/tests, so the working tree may **not compile** right now.
+- **▶ Resume here:** finish the ripple —
+  1. `FindByIsbn(Isbn sought)` keeps the **strong `Isbn`** (not `string`, not `Fin<Isbn>`) — parse at the boundary, pass strong types inward.
+  2. Tests are the boundary: unwrap once with `Isbn.Create("…").ThrowIfFail()` (test-arrange only; prod composes with `Bind`/`Match`). A helper `static Isbn AnIsbn(string s) => Isbn.Create(s).ThrowIfFail();` DRYs it.
+  3. **Use valid 13-digit ISBNs** in tests now (old `"1-07-040578-7"` is only 10 digits → would `Fail`). Hit test's `"978-0-8074-3807-7"` is valid.
+  4. Then finish `Create`'s red→green (happy path `FinSucc` first; failures via `IsFail` + `Match` on `Error.Message`). Then → Task 3.
 
 ## Rules of engagement
 
@@ -49,8 +54,11 @@ Each task names the concept it tends to invite. Resist over-thinking — the *fi
 *Recall:* what's the idiomatic bridge when your backing store is a `Dictionary` returning `null` on a miss?
 
 ### 2. Parse / validate input that can fail *with a reason* → `Fin`
-`ParseIsbn(string raw) → Fin<string>` (or introduce a small `Isbn` wrapper type). Rules, e.g.: strip hyphens/whitespace; it must be exactly 13 digits. On failure, return a `Fail` whose `Error` says *why* ("ISBN must be 13 digits, got 10").
-*Recall:* failure is a **value** here, not a thrown exception. Why `Fin` rather than `Option` for this?
+Graduate `Isbn` from the `using`-alias into a real **`readonly record struct Isbn`** with a **smart constructor**:
+`public static Fin<Isbn> Create(string raw)` — validate (strip hyphens/whitespace; require exactly 13 digits) and return `FinSucc(new Isbn(clean))` or `FinFail<Isbn>(Error.New("ISBN must be 13 digits; got 10"))`. Make the raw ctor **private** so `Create` is the only door in — "parse, don't validate": holding an `Isbn` *proves* it's valid.
+*(Simpler alternative: a free function `ParseIsbn(string raw) → Fin<Isbn>`. Same validation, but it can't stop a caller from `new`-ing an invalid `Isbn` elsewhere. We're going with `Isbn.Create` for the stronger guarantee.)*
+*Recall:* failure is a **value** here (an `Error`), not a thrown exception — needs `using LanguageExt.Common;` for `Error`. Why `Fin` rather than `Option`? Because "absent, no reason" isn't enough; you want to say *why* it's invalid.
+*Caveat:* a `record struct` can't close the `default(Isbn)` hole (its `Value` would be `null`); the private ctor stops `new Isbn("garbage")`, not `default`. Good enough for the kata.
 
 ### 3. Turn "absent" into "an error" → `Option` → `Fin`
 `RequireBook(string isbn) → Fin<Book>`: reuse `FindByIsbn`, but for a flow where a missing book *is* a failure, convert the `None` into a `Fail(Error.New("no book with isbn …"))`.
@@ -77,3 +85,22 @@ Each task names the concept it tends to invite. Resist over-thinking — the *fi
 ## When you're done
 
 There's no answer key by design — ping me to review your solution, sanity-check idioms, or compare against how I'd write it. Then back to the main line: **Phase 2, Step 3**.
+
+--- 
+
+## Notes and questions
+
+** Idiomatic code for translating a C# value that could return `null` into an `Option` type. **
+
+The `GetValueOrDefault()` call returns the sought book if it is present. If `null` is returned, the compiler
+will return the "default" for the type, `Book`. Since `Book` is a record, the default value will again be
+`null`. The call to `Optional` will translate these two values into `Option.Some<Book>` if the value is
+**not** `null` and into `Option<Book>.None` if no such book exists.
+
+We could have defined a `Book` to be a `record struct` instead of a `record`. The `record` type, under the 
+hood is actually a .NET class which has a default value of `null`. If we had used a `record struct`. we 
+would actually have a `struct` "under the hood" and the default value would not be `null` but a record with
+all "bits" initialized to zero.
+
+Sneak peak. we'll review this choice in Phase 4 when we translate the `Dictionary` to using `Map<K, V>`
+from LanguageExt.

@@ -11,8 +11,8 @@ public class KataLibraryTests
     {
         var library = new Library();
 
-        var isbn = new Isbn("1-07-040578-7");
-        var foundBook = library.FindByIsbn(isbn);
+        var maybeIsbnText = Isbn.Create("1-07-040578-7");
+        var foundBook = library.FindByIsbn(maybeIspnText.);
         
         LangExtAssert.Equal(Option<Book>.None, foundBook);
     }
@@ -21,7 +21,7 @@ public class KataLibraryTests
     public void BookInLibrary_FindBookByIsbn_ReturnsSome()
     {
         var library = new Library();
-        var isbn = new Isbn("978-0-8074-3807-7");
+        var isbn = Isbn.Create("978-0-8074-3807-7");
         var book = new Book(isbn, "maiores occaecati sed");
         library.AddBook(book);
         
@@ -79,10 +79,23 @@ public class Library
         Optional(_books.GetValueOrDefault(sought));
 }
 
-public record struct Isbn(string Value)
+public record struct Isbn
 {
+    public string Value { get;  } // Define a read-only property
+    private Isbn(string value) => Value = value; // Initialize this property in a **private** constructor
+    
     // Factory method to construct an instance from a string.
-    public static Fin<Isbn> Create(string candidateIsbn) => FinFail<Isbn>(Error.New("todo"));
+    public static Fin<Isbn> Create(string candidateIsbn) 
+    {
+        if (string.IsNullOrEmpty(candidateIsbn))
+        {
+            return FinFail<Isbn>(Error.New($"ISBN cannot be null, empty, or all whitespace: {candidateIsbn}"));
+        }
+
+        var validIsbnText = candidateIsbn.Trim() // Remove surrounding whitespace
+                                       .Replace("-", ""); // Remove dashes
+        return FinSucc<Isbn>(new Isbn(validIsbnText));
+    }
 }
 
 public record Book(Isbn Id, string Title);
