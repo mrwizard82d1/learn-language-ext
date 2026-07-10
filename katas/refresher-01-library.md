@@ -5,14 +5,11 @@
 ## Progress / resume point
 
 - **Task 1 — ✅ done.** `KataLibraryTests.cs`: `record Book`, `Library` with `AddBook` + `FindByIsbn(isbn) => Optional(_books.GetValueOrDefault(sought))`, hit + miss tests green. `Isbn` is a `using Isbn = string;` alias (not distinct — deferred). Chose to keep `Dictionary` + `Optional` bridge now, revisit `Map<K,V>` in Phase 4 (staggered learning). Noted: the `Optional(GetValueOrDefault)` idiom relies on `Book` being a *reference* type; a `record struct` would break the `None` case.
-- **Task 2 — nearly done.** `Isbn` is a `record struct` with private ctor + `static Fin<Isbn> Create(string)` that validates (empty/whitespace, length==13, all-digits) and stores the normalized (dash-stripped) value. Strong `Isbn` threaded through `Book`/`Library`/tests. 29 tests green.
+- **Task 2 — ✅ done.** `Isbn` is a **`readonly record struct`** with private ctor + validating `static Fin<Isbn> Create(string)` (empty/whitespace, length==13, all-`char.IsAsciiDigit`; stores normalized dash-stripped value). Strong `Isbn` threaded through `Book`/`Library`/tests. Includes 1a fix (strip from *trimmed* value + padded-valid test) and item-4 polish. 30 tests green. Failure tests assert via `IsFail`+`Match` (not `Equal` — `Fin` ignores `Error` in equality). *(Also: the whole project migrated xUnit v3/MTP → xUnit 2/VSTest on 2026-07-10.)*
 
-### ▶ Resume here — Task 2 cleanup checklist (then Task 3)
+### ▶ Resume here — Task 3
 
-- [ ] **1a (correctness — do first).** In `Isbn.Create`, strip dashes from the **trimmed** value: `trimmedCandidateIsbn.Replace("-", "")` (currently uses the *untrimmed* `candidateIsbn`, so a space-padded-but-valid ISBN wrongly fails length/digit checks). **TDD it:** add a padded-but-valid red test first, e.g. `Create(" 978-0-06-346001-0 ")` → `Succ` with `Value == "9780063460010"` — red now, green after the one-word fix.
-- [ ] **4 (minors/polish).** `readonly record struct Isbn` (confirm the modifier); remove unused `using System.Runtime.CompilerServices;`; drop the redundant `else if` after a `return`; consider `char.IsAsciiDigit` instead of `char.IsDigit` (ASCII-only — `IsDigit` accepts Unicode digits); comment typos ("Sneak peak"→"peek", stray period on the record-struct line); cosmetic `noDashCandidateIsbn=` spacing.
-- **2 & 3 — believed already handled tonight; confirm, don't redo:** (2) failure tests now assert with `IsFail` + `Match` on the message, not `Equal` (which ignores the `Error` — `Fin` treats all Fails as equal). (3) `NoSuchBook` uses a valid 13-digit ISBN, and malformed cases added (10-char, non-digit, empty/whitespace theory).
-- [ ] **Task 3 next:** `RequireBook(string) → Fin<Book>` — reuse `FindByIsbn`, convert `None` → `Fail(Error.New(...))` (the `Option`→`Fin` boundary).
+- [ ] **Task 3:** `RequireBook(string rawIsbn) → Fin<Book>` — for a flow where a missing book *is* a failure. Parse the raw ISBN (`Isbn.Create`), then look it up (`FindByIsbn` → `Option<Book>`), converting the `None` into a `Fail(Error.New("no book with isbn …"))`. This is the **`Option`→`Fin` boundary** (and a taste of reconciling `Fin` + `Option` — see the Phase-2 conversions note). Then → Task 4 (`Either<L,R>` with a domain error).
 
 ## Rules of engagement
 
