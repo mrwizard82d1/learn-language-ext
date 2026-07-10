@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+
 namespace Expenses.Tests;
 
 using LanguageExt;
@@ -11,8 +13,8 @@ public class KataLibraryTests
     {
         var library = new Library();
 
-        var maybeIsbnText = Isbn.Create("1-07-040578-7");
-        var foundBook = library.FindByIsbn(maybeIspnText.);
+        var isbn = Isbn.Create("978-0-7766-5519-2").ThrowIfFail();
+        var foundBook = library.FindByIsbn(isbn);
         
         LangExtAssert.Equal(Option<Book>.None, foundBook);
     }
@@ -21,7 +23,7 @@ public class KataLibraryTests
     public void BookInLibrary_FindBookByIsbn_ReturnsSome()
     {
         var library = new Library();
-        var isbn = Isbn.Create("978-0-8074-3807-7");
+        var isbn = Isbn.Create("978-0-8074-3807-7").ThrowIfFail();
         var book = new Book(isbn, "maiores occaecati sed");
         library.AddBook(book);
         
@@ -30,24 +32,59 @@ public class KataLibraryTests
         LangExtAssert.Equal(Option<Book>.Some(book), foundBook);
     }
 
-    [Fact]
-    public void BadlyFormedIsbnText_CreateIsbn_ReturnsFinFail()
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData("\t")]
+    public void EmptyOrAllWhitespaceIsbnText_CreateIsbn_ReturnsFinFail(string candidateIsbn)
     {
-        var candidateIsbn = "";
-        
         var maybeIsbn = Isbn.Create(candidateIsbn);
 
-        LangExtAssert.Equal(FinFail<Isbn>(Error.New(candidateIsbn)), maybeIsbn);
+        Assert.Multiple(
+            () => Assert.True(maybeIsbn.IsFail),
+            () => Assert.Contains($"ISBN can be neither empty nor all whitespace: '{candidateIsbn}'.", 
+                                  maybeIsbn.Match(Succ: _ => "",
+                                      Fail: e => e.Message))
+            );
+    }
+    
+    [Fact]
+    public void TenCharacterIsbn_CreateIsbn_ReturnsFinFail()
+    {
+        const string candidateIsbn = "0-601-17942-4";
+        var maybeIsbn = Isbn.Create(candidateIsbn);
+
+        const string candidateIsbnNoDashes = "0601179424";
+        Assert.Multiple(
+            () => Assert.True(maybeIsbn.IsFail),
+            () => Assert.Contains($"ISBN must be 13 characters long: {candidateIsbnNoDashes}.", 
+                                  maybeIsbn.Match(Succ: _ => "",
+                                                  Fail: e => e.Message))
+        );
+    }
+    
+    [Fact]
+    public void IsbnWithNonDigitCharacter_CreateIsbn_ReturnsFinFail()
+    {
+        const string candidateIsbn = "012345678901a";
+        var maybeIsbn = Isbn.Create(candidateIsbn);
+
+        Assert.Multiple(
+            () => Assert.True(maybeIsbn.IsFail),
+            () => Assert.Equal($"ISBN must only contain digits: {candidateIsbn}.", 
+                               maybeIsbn.Match(Succ: _ => "", 
+                                               Fail: e => e.Message))
+        );
     }
 
     [Fact]
     public void ValidIsbnText_CreateIsbn_ReturnsFin()
     {
-        var candidateIsbn = "978-0-06-346001-0";
-        
-        var maybeIsbn = Isbn.Create(candidateIsbn);
+        const string candidateIsbn = "978-0-06-346001-0";
+        const string expectedIsbnValue = "9780063460010";
+        var isbn = Isbn.Create(candidateIsbn).ThrowIfFail();
 
-        LangExtAssert.Equal(FinSucc(new Isbn(candidateIsbn)), maybeIsbn);
+        LangExtAssert.Equal(expectedIsbnValue, isbn.Value);
     }
 }
 
@@ -85,15 +122,26 @@ public record struct Isbn
     private Isbn(string value) => Value = value; // Initialize this property in a **private** constructor
     
     // Factory method to construct an instance from a string.
-    public static Fin<Isbn> Create(string candidateIsbn) 
+    public static Fin<Isbn> Create(string candidateIsbn)
     {
-        if (string.IsNullOrEmpty(candidateIsbn))
+        var trimmedCandidateIsbn = candidateIsbn.Trim();
+        if (string.IsNullOrWhiteSpace(trimmedCandidateIsbn))
         {
-            return FinFail<Isbn>(Error.New($"ISBN cannot be null, empty, or all whitespace: {candidateIsbn}"));
+            return FinFail<Isbn>(Error.New($"ISBN can be neither empty nor all whitespace: '{candidateIsbn}'."));
         }
 
-        var validIsbnText = candidateIsbn.Trim() // Remove surrounding whitespace
-                                       .Replace("-", ""); // Remove dashes
+        var noDashCandidateIsbn= candidateIsbn.Replace("-", ""); // Remove dashes
+        if (noDashCandidateIsbn.Length != 13) // "new" ISBN only
+        {
+            return FinFail<Isbn>(Error.New($"ISBN must be 13 characters long: {noDashCandidateIsbn}."));
+        }
+        else if (!noDashCandidateIsbn.All(char.IsDigit))
+        {
+            return FinFail<Isbn>(Error.New($"ISBN must only contain digits: {noDashCandidateIsbn}."));
+        }
+        
+        // ReSharper disable once InlineTemporaryVariable
+        var validIsbnText = noDashCandidateIsbn;
         return FinSucc<Isbn>(new Isbn(validIsbnText));
     }
 }

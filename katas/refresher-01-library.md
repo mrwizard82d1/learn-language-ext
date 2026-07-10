@@ -5,12 +5,14 @@
 ## Progress / resume point
 
 - **Task 1 — ✅ done.** `KataLibraryTests.cs`: `record Book`, `Library` with `AddBook` + `FindByIsbn(isbn) => Optional(_books.GetValueOrDefault(sought))`, hit + miss tests green. `Isbn` is a `using Isbn = string;` alias (not distinct — deferred). Chose to keep `Dictionary` + `Optional` bridge now, revisit `Map<K,V>` in Phase 4 (staggered learning). Noted: the `Optional(GetValueOrDefault)` idiom relies on `Book` being a *reference* type; a `record struct` would break the `None` case.
-- **Task 2 — in progress.** `Isbn` graduated to a `readonly record struct` with a **private ctor** + `static Fin<Isbn> Create(string)` (strip non-digits, require 13 → `FinSucc`/`FinFail(Error.New(...))`). Needs `using LanguageExt.Common;`. Mid-refactor: wiring the strong `Isbn` type through `Book`/`Library`/tests, so the working tree may **not compile** right now.
-- **▶ Resume here:** finish the ripple —
-  1. `FindByIsbn(Isbn sought)` keeps the **strong `Isbn`** (not `string`, not `Fin<Isbn>`) — parse at the boundary, pass strong types inward.
-  2. Tests are the boundary: unwrap once with `Isbn.Create("…").ThrowIfFail()` (test-arrange only; prod composes with `Bind`/`Match`). A helper `static Isbn AnIsbn(string s) => Isbn.Create(s).ThrowIfFail();` DRYs it.
-  3. **Use valid 13-digit ISBNs** in tests now (old `"1-07-040578-7"` is only 10 digits → would `Fail`). Hit test's `"978-0-8074-3807-7"` is valid.
-  4. Then finish `Create`'s red→green (happy path `FinSucc` first; failures via `IsFail` + `Match` on `Error.Message`). Then → Task 3.
+- **Task 2 — nearly done.** `Isbn` is a `record struct` with private ctor + `static Fin<Isbn> Create(string)` that validates (empty/whitespace, length==13, all-digits) and stores the normalized (dash-stripped) value. Strong `Isbn` threaded through `Book`/`Library`/tests. 29 tests green.
+
+### ▶ Resume here — Task 2 cleanup checklist (then Task 3)
+
+- [ ] **1a (correctness — do first).** In `Isbn.Create`, strip dashes from the **trimmed** value: `trimmedCandidateIsbn.Replace("-", "")` (currently uses the *untrimmed* `candidateIsbn`, so a space-padded-but-valid ISBN wrongly fails length/digit checks). **TDD it:** add a padded-but-valid red test first, e.g. `Create(" 978-0-06-346001-0 ")` → `Succ` with `Value == "9780063460010"` — red now, green after the one-word fix.
+- [ ] **4 (minors/polish).** `readonly record struct Isbn` (confirm the modifier); remove unused `using System.Runtime.CompilerServices;`; drop the redundant `else if` after a `return`; consider `char.IsAsciiDigit` instead of `char.IsDigit` (ASCII-only — `IsDigit` accepts Unicode digits); comment typos ("Sneak peak"→"peek", stray period on the record-struct line); cosmetic `noDashCandidateIsbn=` spacing.
+- **2 & 3 — believed already handled tonight; confirm, don't redo:** (2) failure tests now assert with `IsFail` + `Match` on the message, not `Equal` (which ignores the `Error` — `Fin` treats all Fails as equal). (3) `NoSuchBook` uses a valid 13-digit ISBN, and malformed cases added (10-char, non-digit, empty/whitespace theory).
+- [ ] **Task 3 next:** `RequireBook(string) → Fin<Book>` — reuse `FindByIsbn`, convert `None` → `Fail(Error.New(...))` (the `Option`→`Fin` boundary).
 
 ## Rules of engagement
 
