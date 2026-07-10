@@ -86,6 +86,16 @@ public class KataLibraryTests
 
         LangExtAssert.Equal(expectedIsbnValue, isbn.Value);
     }
+
+    [Fact]
+    public void PaddedButValidIsbnText_CreateIsbn_ReturnsFin()
+    {
+        const string candidateIsbn = " 978-0-7237-7584-3\r";
+        var isbn = Isbn.Create(candidateIsbn).ThrowIfFail();
+            
+        const string expectedIsbnValue = "9780723775843";
+        LangExtAssert.Equal(expectedIsbnValue, isbn.Value);
+    }
 }
 
 public class Library
@@ -130,7 +140,7 @@ public record struct Isbn
             return FinFail<Isbn>(Error.New($"ISBN can be neither empty nor all whitespace: '{candidateIsbn}'."));
         }
 
-        var noDashCandidateIsbn= candidateIsbn.Replace("-", ""); // Remove dashes
+        var noDashCandidateIsbn= trimmedCandidateIsbn.Replace("-", ""); // Remove dashes
         if (noDashCandidateIsbn.Length != 13) // "new" ISBN only
         {
             return FinFail<Isbn>(Error.New($"ISBN must be 13 characters long: {noDashCandidateIsbn}."));
