@@ -7,7 +7,7 @@
 - Step headers end with `[ ]`. Flip to `[x]` when complete.
 - First unchecked step = your resume point.
 - "Notes & questions" at the bottom is yours.
-- **Test runs:** `Expenses.Tests` Run configuration (Rider) or `dotnet test` (CLI).
+- **Test runs:** Rider's built-in test runner ("Run All Tests from Solution") or `dotnet test` (CLI).
 
 ## Goal
 
@@ -20,7 +20,7 @@ Stand up a fresh .NET 10 solution mirroring the structure of learn-xunit, with:
 ## Decisions made
 
 - **.NET 10 pinned via `global.json`.** Same approach as learn-xunit. Reproducible across machine reinstalls.
-- **xUnit v3 with MTP.** Same testing toolchain as learn-xunit. Lifecycle, `[Theory]` patterns, serializer infrastructure — all carry over.
+- **xUnit v3 with MTP.** *(Superseded 2026-07-10 — migrated to **xUnit 2 (classic VSTest)** to match Larry's team and regain Rider's built-in runner; see `TUTORIAL_PLAN.md`.)* Same testing toolchain as learn-xunit. Lifecycle, `[Theory]` patterns, serializer infrastructure — all carry over.
 - **LanguageExt Core only.** `LanguageExt.Sys`, `LanguageExt.Pipes`, and other adjuncts aren't needed for this tutorial's scope. If we need more later, we'll add it explicitly.
 - **LanguageExt.Core 4.4.9 (stable).** The doc originally assumed v5 would be stable by 2026, but v5 never shipped — it's still in beta (`5.0.0-beta-77` as of 2026-05), so `dotnet add package` resolves to the latest stable, 4.4.9. Chose to stay on stable: the v4→v5 changes are concentrated in the deep-end effect system (traits/HKT, `Eff`/`Aff`) this tutorial excludes, while the `Option`/`Either`/`Fin`/`Validation`/collections surface we're learning is mature and largely stable across the boundary. Online examples/SO answers also match v4.
 - **Test toolchain reconciled to learn-xunit.** The `dotnet new xunit3` template emitted a minimal classlib-shaped csproj (no xUnit package, no MTP props). Replaced it with learn-xunit's shape: `xunit.v3.mtp-v2` 3.2.2, `OutputType=Exe`, `TestingPlatformDotnetTestSupport`, `IsTestProject`.
@@ -132,7 +132,7 @@ Both smoke tests should pass.
 
 **If `LanguageExtIsAvailable` fails to compile:** most likely v4-vs-v5 API drift on `Option`'s construction. Confirm the package resolved to v5 (Step 2). The `Some(...)` free function and `IsSome` property are both v5-stable.
 
-**If test discovery doesn't find the tests:** compare your `Expenses.Tests.csproj` to `learn-xunit/tests/Ledger.Tests/Ledger.Tests.csproj` line-by-line. The MTP-specific properties (`<OutputType>Exe</OutputType>`, `<TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>`, `<IsTestProject>true</IsTestProject>`) all need to be present.
+**If test discovery doesn't find the tests:** *(Historical / MTP-era — no longer applies after the 2026-07-10 move to xUnit 2 / VSTest.)* compare your `Expenses.Tests.csproj` to `learn-xunit/tests/Ledger.Tests/Ledger.Tests.csproj` line-by-line. The MTP-specific properties (`<OutputType>Exe</OutputType>`, `<TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>`, `<IsTestProject>true</IsTestProject>`) all need to be present.
 
 ### Step 6 — Capture decisions  `[x]`
 

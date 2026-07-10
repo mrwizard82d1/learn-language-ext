@@ -19,8 +19,8 @@ By the end you should be able to:
 - **Project root**: `~/professional/projects/learn-language-ext/`
 - **Editor**: JetBrains Rider via Gateway Remote Development (Path D, same as the learn-xunit project)
 - **Runtime**: .NET 10 with `global.json` pin
-- **Testing**: xUnit v3 with MTP runner — same toolchain as learn-xunit, so what you've learned there transfers (lifecycle, theory data, serializer infrastructure, etc.)
-- **Test runner caveat**: Test Explorer is broken for xUnit v3 + MTP on Rider 2026.1. Use the auto-generated `Expenses.Tests` Run configuration or `dotnet test` from the CLI.
+- **Testing**: **xUnit 2 (classic VSTest)** — migrated from xUnit v3/MTP on 2026-07-10 to match Larry's team's stack and regain Rider's built-in test runner. Packages: `xunit` 2.9.3, `xunit.runner.visualstudio` 3.1.4, `Microsoft.NET.Test.Sdk` 17.14.1.
+- **Test runner**: Rider's **built-in runner** works (VSTest) — "Run All Tests from Solution" uses Rider's UI; `dotnet test` also works from the CLI. *(The earlier MTP "Test Explorer broken" caveat no longer applies.)*
 
 ## Phases
 

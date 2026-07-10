@@ -7,7 +7,7 @@
 - Step headers end with `[ ]`. **You** flip them to `[x]` when complete — I'll just remind you.
 - First unchecked step = your resume point.
 - "Notes & questions" at the bottom is yours.
-- **Test runs:** `Expenses.Tests` Run configuration (Rider) or `dotnet test` (CLI).
+- **Test runs:** Rider's built-in test runner ("Run All Tests from Solution") or `dotnet test` (CLI).
 - **TDD rhythm:** red → green → refactor. A red must be a *runnable assertion failure*, never a compile error. New types start **inline in the test file**; extracting to `src/Expenses` is the first refactor after green.
 - **Assertions:** use `LangExtAssert.Equal(expected, actual)` for any `Option`/`Either`/`Fin` comparison — it renders failures via `ToString()` instead of the `[[…]]` collection dump.
 
