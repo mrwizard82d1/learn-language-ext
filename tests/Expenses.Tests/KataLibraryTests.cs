@@ -141,7 +141,8 @@ public class Library
 
     public Fin<Book> RequireBook(string validIsbnText)
     {
-        return FinFail<Book>(Error.New($"Book with ISBN, '{validIsbnText}' not found."));
+        return Isbn.Create(validIsbnText)
+                   .Bind(isbn => FindByIsbn(isbn).ToFin(Error.New($"No book with ISBN {isbn.Value}.")));
     }
 }
 
