@@ -146,6 +146,28 @@ public class KataLibraryTests
                                                Fail: e => e.Message))
         );
     }
+
+    [Fact]
+    public void BookAvailable_LoanBook_ReturnsEither()
+    {
+        // Given
+        const string soughtIsbnText = "978-1-63614-253-1";
+        var soughtIsbn = Isbn.Create(soughtIsbnText).ThrowIfFail();
+        var soughtBook = new Book(soughtIsbn, "repellendus rerum natus");
+        
+        var library = new Library();
+        library.AddBook(soughtBook);
+
+        // When
+        var memberId = new MemberId(3293);
+        const string  memberName = "Brenda Liu";
+        var member = new Member(memberId, memberName);
+        var result = library.Borrow(soughtBook, member);
+        
+        // Then
+        const string trimmedIsbnText = "9781636142531";
+        LangExtAssert.Equal(Right<Loan>(new Loan(memberId, soughtIsbn)), result);
+    }
 }
 
 public class Library
@@ -155,6 +177,11 @@ public class Library
     public void AddBook(Book book)
     {
         _books.Add(book.Id, book);
+    }
+
+    public Either<BorrowError, Loan> Borrow(Book book, Member member)
+    {
+        return Left<BorrowError>(BorrowError.Uncategorized);
     }
 
     // Idiomatic code for translating a C# value that could return `null` into an `Option` type.
@@ -210,3 +237,15 @@ public readonly record struct Isbn
 }
 
 public record Book(Isbn Id, string Title);
+
+public enum BorrowError
+{
+    Uncategorized,
+}
+
+public readonly record struct MemberId(int Value);
+
+public record Member(MemberId Id, string Name);
+
+public record Loan(MemberId Id, Isbn isbn);
+
