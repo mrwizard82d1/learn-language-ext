@@ -108,7 +108,7 @@ public class KataLibraryTests
         
         var actual = library.RequireBook(validIsbnText);
         
-        LangExtAssert.Equal(book, actual);
+        LangExtAssert.Equal(FinSucc(book), actual);
     }
 
     [Fact]
@@ -175,11 +175,9 @@ public class Library
     public Option<Book> FindByIsbn(Isbn sought)  =>
         Optional(_books.GetValueOrDefault(sought));
 
-    public Fin<Book> RequireBook(string validIsbnText)
-    {
-        return Isbn.Create(validIsbnText)
-                   .Bind(isbn => FindByIsbn(isbn).ToFin(Error.New($"No book with ISBN {isbn.Value} found.")));
-    }
+    public Fin<Book> RequireBook(string validIsbnText) =>
+        Isbn.Create(validIsbnText)
+            .Bind(isbn => FindByIsbn(isbn).ToFin(Error.New($"No book with ISBN {isbn.Value} found.")));
 }
 
 public readonly record struct Isbn
