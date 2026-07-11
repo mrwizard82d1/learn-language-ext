@@ -175,11 +175,15 @@ public class Library
     public Option<Book> FindByIsbn(Isbn sought)  =>
         Optional(_books.GetValueOrDefault(sought));
 
-    public Fin<Book> RequireBook(string validIsbnText)
-    {
-        return Isbn.Create(validIsbnText)
-                   .Bind(isbn => FindByIsbn(isbn).ToFin(Error.New($"No book with ISBN {isbn.Value} found.")));
-    }
+    public Fin<Book> RequireBook(string isbnText) =>
+        Isbn.Create(isbnText)
+            .Match(
+                Succ: isbn =>
+                    FindByIsbn(isbn)
+                        .Match(
+                            Some: FinSucc,
+                            None: () => FinFail<Book>(Error.New($"No book with ISBN {isbn.Value} found."))),
+                Fail: FinFail<Book>);
 }
 
 public readonly record struct Isbn
