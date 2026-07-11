@@ -94,6 +94,22 @@ public class KataLibraryTests
         const string expectedIsbnValue = "9780723775843";
         LangExtAssert.Equal(expectedIsbnValue, isbn.Value);
     }
+
+    [Fact]
+    public void ValidIsbnAndBookPresent_RequireBook_ReturnsFinBook()
+    {
+        var library = new Library();
+        
+        const string validIsbnText = "978-0-590-22380-5";
+        var isbn =  Isbn.Create(validIsbnText).ThrowIfFail();
+        var book = new Book(isbn, "sapiente recusandae aliquam");
+        
+        library.AddBook(book);
+        
+        var actual = library.RequireBook(validIsbnText);
+        
+        LangExtAssert.Equal(book, actual);
+    }
 }
 
 public class Library
@@ -122,6 +138,11 @@ public class Library
     //
     public Option<Book> FindByIsbn(Isbn sought)  =>
         Optional(_books.GetValueOrDefault(sought));
+
+    public Fin<Book> RequireBook(string validIsbnText)
+    {
+        return FinFail<Book>(Error.New($"Book with ISBN, '{validIsbnText}' not found."));
+    }
 }
 
 public readonly record struct Isbn
