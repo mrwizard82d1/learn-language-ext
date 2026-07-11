@@ -7,9 +7,16 @@
 - **Task 1 — ✅ done.** `KataLibraryTests.cs`: `record Book`, `Library` with `AddBook` + `FindByIsbn(isbn) => Optional(_books.GetValueOrDefault(sought))`, hit + miss tests green. `Isbn` is a `using Isbn = string;` alias (not distinct — deferred). Chose to keep `Dictionary` + `Optional` bridge now, revisit `Map<K,V>` in Phase 4 (staggered learning). Noted: the `Optional(GetValueOrDefault)` idiom relies on `Book` being a *reference* type; a `record struct` would break the `None` case.
 - **Task 2 — ✅ done.** `Isbn` is a **`readonly record struct`** with private ctor + validating `static Fin<Isbn> Create(string)` (empty/whitespace, length==13, all-`char.IsAsciiDigit`; stores normalized dash-stripped value). Strong `Isbn` threaded through `Book`/`Library`/tests. Includes 1a fix (strip from *trimmed* value + padded-valid test) and item-4 polish. 30 tests green. Failure tests assert via `IsFail`+`Match` (not `Equal` — `Fin` ignores `Error` in equality). *(Also: the whole project migrated xUnit v3/MTP → xUnit 2/VSTest on 2026-07-10.)*
 
-### ▶ Resume here — Task 3
+- **Task 3 — ✅ done.** `RequireBook(string) → Fin<Book>` via `Isbn.Create(...).Bind(isbn => FindByIsbn(isbn).ToFin(Error.New(...)))`. Three tests (present→`Succ`, absent→`Fail`"no book", malformed→`Fail` with the *parse* message — which **proves the short-circuit**: lookup never runs). Explored a point-free `Match` "verbose twin" (`git` history at `99ca10f`), proved equivalent by the same green tests, then reverted.
 
-- [ ] **Task 3:** `RequireBook(string rawIsbn) → Fin<Book>` — for a flow where a missing book *is* a failure. Parse the raw ISBN (`Isbn.Create`), then look it up (`FindByIsbn` → `Option<Book>`), converting the `None` into a `Fail(Error.New("no book with isbn …"))`. This is the **`Option`→`Fin` boundary** (and a taste of reconciling `Fin` + `Option` — see the Phase-2 conversions note). Then → Task 4 (`Either<L,R>` with a domain error).
+  **Key insight (Bind/ToFin = the Match twin, unrolled):**
+  - Outer `Match(Succ: f, Fail: FinFail<Book>)` — where `Fail` just re-wraps the error *unchanged* — **is** `.Bind(f)`.
+  - Inner `Match(Some: FinSucc, None: () => FinFail(err))` — **is** `Option.ToFin(err)`.
+  - So the combinators aren't magic; they're the exact plumbing, factored out. **Heuristic:** if a branch only re-shapes/re-wraps without adding logic, a combinator already does it — that's the tell to collapse it. "Explicit-to-learn, then collapse" is a fine workflow.
+
+### ▶ Resume here — Task 4
+
+- [ ] **Task 4:** `Borrow(Book, Member) → Either<BorrowError, Loan>`, where **`BorrowError` is your own domain type** (enum or small record/union): e.g. `AlreadyOnLoan`, `MemberAtLimit` (max 3 active loans). This is where `Either<L,R>` earns its keep over `Fin` — the failure is a **domain concept the compiler tracks**, not just a message. Then → Task 5 (`Bind`-compose the whole checkout, reconciling the different elevated types).
 
 ## Rules of engagement
 
