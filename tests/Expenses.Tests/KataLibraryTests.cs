@@ -110,6 +110,42 @@ public class KataLibraryTests
         
         LangExtAssert.Equal(book, actual);
     }
+
+    [Fact]
+    public void ValidIsbnAndBookAbsent_RequireBook_ReturnsFinFailWithNoBookMessage()
+    {
+        var library = new Library();
+        
+        const string validIsbnText = "978-1-08-085983-7";
+        
+        var actual = library.RequireBook(validIsbnText);
+        
+        const string expectedIsbnText = "9781080859837";
+        Assert.Multiple(
+            () => Assert.True(actual.IsFail),
+            () => Assert.Contains($"No book with ISBN {expectedIsbnText} found.",
+                                  actual.Match(Succ: _ => "", 
+                                               Fail: e => e.Message))
+        );
+    }
+
+    [Fact]
+    public void InvalidIsbn_RequireBook_ReturnsFinFailWithInvalidIsbnMessage()
+    {
+        var library = new Library();
+        
+        const string invalidIsbnText = "978-1-03-838901-";
+        
+        var actual = library.RequireBook(invalidIsbnText);
+        
+        const string expectedInvalidIsbnText = "978103838901";
+        Assert.Multiple(
+            () => Assert.True(actual.IsFail),
+            () => Assert.Contains($"ISBN must be 13 characters long: {expectedInvalidIsbnText}.",
+                                  actual.Match(Succ: _ => "", 
+                                               Fail: e => e.Message))
+        );
+    }
 }
 
 public class Library
@@ -142,7 +178,7 @@ public class Library
     public Fin<Book> RequireBook(string validIsbnText)
     {
         return Isbn.Create(validIsbnText)
-                   .Bind(isbn => FindByIsbn(isbn).ToFin(Error.New($"No book with ISBN {isbn.Value}.")));
+                   .Bind(isbn => FindByIsbn(isbn).ToFin(Error.New($"No book with ISBN {isbn.Value} found.")));
     }
 }
 
