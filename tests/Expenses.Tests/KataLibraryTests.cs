@@ -168,6 +168,24 @@ public class KataLibraryTests
         const string trimmedIsbnText = "9781636142531";
         LangExtAssert.Equal(Right<Loan>(new Loan(memberId, soughtIsbn)), result);
     }
+
+    [Fact]
+    public void BookAlreadyOnLoan_Borrow_ReturnsLeftAlreadyOnLoan()
+    {
+        // Given: a book, already borrowed once
+        var isbn = Isbn.Create("978-0-09-784633-0").ThrowIfFail();
+        var book = new Book(isbn, "saepe atque eos");
+        var library = new Library();
+        library.AddBook(book);
+        library.Borrow(book, new Member(new MemberId(9683), "Michael Edwands"));
+        
+        // When: someone tries to borrow a book a second time
+        var actual = library.Borrow(book, new Member(new MemberId(4176), "Carmen Jackson"));
+        
+        // Then borrowing "fails" with `AlreadyOnLoan`
+        Either<BorrowError, Loan> expected = Left(BorrowError.AlreadyOnLoan);
+        LangExtAssert.Equal(expected, actual);
+    }
 }
 
 public class Library
@@ -238,7 +256,8 @@ public record Book(Isbn Id, string Title);
 
 public enum BorrowError
 {
-    Uncategorized,
+    AlreadyOnLoan,
+    MemberAtLimit,
 }
 
 public readonly record struct MemberId(int Value);
