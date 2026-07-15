@@ -191,14 +191,24 @@ public class KataLibraryTests
 public class Library
 {
     private readonly Dictionary<Isbn, Book> _books = new();
+    private Dictionary<Isbn, Loan> _loans = new();
 
     public void AddBook(Book book)
     {
         _books.Add(book.Id, book);
     }
 
-    public Either<BorrowError, Loan> Borrow(Book book, Member member) =>
-        Right(new Loan(member.Id, book.Id));
+    public Either<BorrowError, Loan> Borrow(Book book, Member member)
+    {
+        if (_loans.ContainsKey(book.Id))
+        {
+            return Left(BorrowError.AlreadyOnLoan);
+        }
+
+        var loan = new Loan(member.Id, book.Id);
+        _loans.Add(book.Id, loan);
+        return Right(loan);
+    }
 
     // Idiomatic code for translating a C# value that could return `null` into an `Option` type.
     //
