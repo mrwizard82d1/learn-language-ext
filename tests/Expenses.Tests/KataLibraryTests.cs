@@ -186,6 +186,32 @@ public class KataLibraryTests
         Either<BorrowError, Loan> expected = Left(BorrowError.AlreadyOnLoan);
         LangExtAssert.Equal(expected, actual);
     }
+
+    [Fact]
+    public void MemerAtLoanLimit_Borrow_ReturnsLeftMemberAtLimit()
+    {
+        var library = new Library();
+        var member = new Member(new MemberId(6041), "Marc Salazar");
+        Book AddAndBorrow(string isbnText)
+        {
+            var b = new Book(Isbn.Create(isbnText).ThrowIfFail(), "Don't care");
+            library.AddBook(b);
+            library.Borrow(b, member);
+            return b;
+        }
+
+        AddAndBorrow("978-0-201-48207-2");
+        AddAndBorrow("978-0-12-245994-8");
+        AddAndBorrow("978-0-459-07654-2");
+        
+        // Now try to borrow the fourth, different book.
+        var fourth = new Book(Isbn.Create("978-0-16-235007-6").ThrowIfFail(), "Don't care");
+        library.AddBook(fourth);
+        var actual = library.Borrow(fourth, member);
+        
+        Either<BorrowError, Loan> expected = Left(BorrowError.MemberAtLimit);
+        LangExtAssert.Equal(expected, actual);
+    }
 }
 
 public class Library
