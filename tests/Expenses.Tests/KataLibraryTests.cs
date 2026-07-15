@@ -148,7 +148,7 @@ public class KataLibraryTests
     }
 
     [Fact]
-    public void BookAvailable_LoanBook_ReturnsEither()
+    public void BookAvailable_LoanBook_ReturnsRight()
     {
         // Given
         const string soughtIsbnText = "978-1-63614-253-1";
@@ -179,10 +179,8 @@ public class Library
         _books.Add(book.Id, book);
     }
 
-    public Either<BorrowError, Loan> Borrow(Book book, Member member)
-    {
-        return Left<BorrowError>(BorrowError.Uncategorized);
-    }
+    public Either<BorrowError, Loan> Borrow(Book book, Member member) =>
+        Right(new Loan(member.Id, book.Id));
 
     // Idiomatic code for translating a C# value that could return `null` into an `Option` type.
     //
@@ -247,5 +245,5 @@ public readonly record struct MemberId(int Value);
 
 public record Member(MemberId Id, string Name);
 
-public record Loan(MemberId Id, Isbn isbn);
+public record Loan(MemberId BorrowerId, Isbn BookIsbn);
 
