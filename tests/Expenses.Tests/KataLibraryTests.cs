@@ -188,7 +188,7 @@ public class KataLibraryTests
     }
 
     [Fact]
-    public void MemerAtLoanLimit_Borrow_ReturnsLeftMemberAtLimit()
+    public void MemberAtLoanLimit_Borrow_ReturnsLeftMemberAtLimit()
     {
         var library = new Library();
         var member = new Member(new MemberId(6041), "Marc Salazar");
@@ -217,7 +217,7 @@ public class KataLibraryTests
 public class Library
 {
     private readonly Dictionary<Isbn, Book> _books = new();
-    private Dictionary<Isbn, Loan> _loans = new();
+    private readonly Dictionary<Isbn, Loan> _loans = new();
 
     private const int MaxActiveLoansPerMember = 3;
 
