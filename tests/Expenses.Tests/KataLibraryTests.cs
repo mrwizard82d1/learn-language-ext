@@ -219,6 +219,8 @@ public class Library
     private readonly Dictionary<Isbn, Book> _books = new();
     private Dictionary<Isbn, Loan> _loans = new();
 
+    private const int MaxActiveLoansPerMember = 3;
+
     public void AddBook(Book book)
     {
         _books.Add(book.Id, book);
@@ -229,6 +231,11 @@ public class Library
         if (_loans.ContainsKey(book.Id))
         {
             return Left(BorrowError.AlreadyOnLoan);
+        }
+
+        if (_loans.Values.Count(l => l.BorrowerId == member.Id) >= MaxActiveLoansPerMember)
+        {
+            return Left(BorrowError.MemberAtLimit);
         }
 
         var loan = new Loan(member.Id, book.Id);
