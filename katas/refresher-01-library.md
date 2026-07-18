@@ -14,9 +14,13 @@
   - Inner `Match(Some: FinSucc, None: () => FinFail(err))` — **is** `Option.ToFin(err)`.
   - So the combinators aren't magic; they're the exact plumbing, factored out. **Heuristic:** if a branch only re-shapes/re-wraps without adding logic, a combinator already does it — that's the tell to collapse it. "Explicit-to-learn, then collapse" is a fine workflow.
 
-### ▶ Resume here — Task 4
+- **Task 4 — ✅ done.** `Borrow(Book, Member) → Either<BorrowError, Loan>` on `Library`. `BorrowError` enum = `{ AlreadyOnLoan, MemberAtLimit }` (dropped the `Uncategorized` stub). `Library` tracks active loans in a `Dictionary<Isbn, Loan>`; two sequential guards (book already out → `AlreadyOnLoan`; member's loan count `>= MaxActiveLoansPerMember(3)` → `MemberAtLimit`) then record + `Right(loan)`. Types: `MemberId(int)` record struct, `Member(MemberId Id, string Name)`, `Loan(MemberId BorrowerId, Isbn BookIsbn)` (identity vs role naming). 36 tests green.
 
-- [ ] **Task 4:** `Borrow(Book, Member) → Either<BorrowError, Loan>`, where **`BorrowError` is your own domain type** (enum or small record/union): e.g. `AlreadyOnLoan`, `MemberAtLimit` (max 3 active loans). This is where `Either<L,R>` earns its keep over `Fin` — the failure is a **domain concept the compiler tracks**, not just a message. Then → Task 5 (`Bind`-compose the whole checkout, reconciling the different elevated types).
+  **Key insight:** `Either<L,R>` **compares its `Left` value** in equality (verified), so a domain error can be asserted directly: `LangExtAssert.Equal(Left(BorrowError.AlreadyOnLoan), result)` — *unlike* `Fin`, which ignores its `Error` (there you need `IsFail`+`Match`). Precise assertability is a reason `Either<L,R>` beats `Fin` for domain failures. Sequential guards = first-failure-wins short-circuit (accumulating all needs `Validation`).
+
+### ▶ Resume here — Task 5 (finale)
+
+- [ ] **Task 5 — `Checkout(string rawIsbn, Member member) → …`:** compose the whole flow — parse ISBN → require the book → borrow it — short-circuiting on the first failure, then `Match` to a friendly `string` ("Loaned '…' to …" / the failure reason). **The crux:** the steps return *different* elevated types — `RequireBook` is `Fin<Book>` (error = `Error`), `Borrow` is `Either<BorrowError, Loan>`. To `Bind` them into one chain you must **reconcile** onto a single type/error representation (e.g. `MapLeft`/`BiMap` to align errors, or pick one error type for the flow). This reconciliation is the point — lean in / discuss options first.
 
 ## Rules of engagement
 
