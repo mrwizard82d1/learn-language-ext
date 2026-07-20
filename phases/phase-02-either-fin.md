@@ -307,4 +307,32 @@ So:
 
 Sources (verified 2026-06): louthy's `Fin.cs` doc comment (gist `a402c57393b99915e845a37db36252cd`); wiki ["How to deal with side effects"](https://github.com/louthy/language-ext/wiki/How-to-deal-with-side-effects) ("The `Fin` monad is equivalent to `Either<Error, A>`" and "When the `Aff` and `Eff` monads run, they result in a `Fin<A>`"). This is the **v4.x** lineage (our 4.4.9).
 
+### The two-track model: `Map` vs `MapLeft` vs `Bind` (Either)
+
+An `Either` is a **two-track railway**: a *success* track (`Right`) and a *failure* track (`Left`). Three verbs, each with one precise job:
+
+| Verb | Track it touches | What it does | Leaves the other track… |
+|---|---|---|---|
+| `Map` | **success** (Right) | transform the success value (`A → B`) | untouched (a `Left` passes through) |
+| `MapLeft` | **failure** (Left) | transform the error value (`L → M`) | untouched (a `Right` passes through) |
+| `Bind` | **success** (Right) | run the *next fallible step* (`A → Either<L,B>`); flatten | if already `Left`, **skip** — short-circuit |
+
+Mental one-liner: **`Map`/`MapLeft` *relabel* a track without leaving it; `Bind` *advances* the success track to the next fallible step (or short-circuits if we've already failed).**
+
+**Why `MapLeft` matters — reconciling heterogeneous errors (the kata Task 5 lesson):** to `Bind` two fallible steps into one chain, they must share **one** error type. When step 1 fails with `Error` (from a `Fin`, via `.ToEither()` → `Either<Error, _>`) and step 2 fails with a domain `BorrowError`, you use `MapLeft` to *translate each step's error into a common union* (`CheckoutError`) so the tracks line up:
+
+```csharp
+RequireBook(rawIsbn)                                  // Fin<Book>
+    .ToEither()                                        // Either<Error, Book>
+    .MapLeft(e  => (CheckoutError) new NotFound(e))    // Either<CheckoutError, Book>   ← relabel error track
+    .Bind(book => Borrow(book, member)                 // Either<BorrowError, Loan>
+                    .MapLeft(be => (CheckoutError) new CannotBorrow(be)));  // Either<CheckoutError, Loan>
+```
+
+- The `(CheckoutError)` casts (or an explicit-return-type lambda, `CheckoutError (e) => …`) **widen** each union case to the base type, so both `MapLeft`s produce `Either<CheckoutError, _>` and `Bind` can thread them.
+- `Bind` (not `Map`) because `Borrow` returns an *already-wrapped* value; `Map` would nest it (`Either<…, Either<…>>`). `Bind` = `Map` + flatten (Phase-1 `Flatten`/`join` note).
+- This preserves **typed** errors end to end (vs. flattening everything to a string `Error`) — the reason to unify on a domain union rather than collapse to `Fin`. Trade-off recorded because it's subtle and takes a few reps to feel; that's expected.
+
+Same three verbs recur for `Option`, `Fin`, `Validation` — only `Either` exposes both `Map` (right) and `MapLeft` (left) prominently because it's the two-sided one.
+
 -
