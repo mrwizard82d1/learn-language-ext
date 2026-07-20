@@ -165,8 +165,7 @@ public class KataLibraryTests
         var result = library.Borrow(soughtBook, member);
         
         // Then
-        const string trimmedIsbnText = "9781636142531";
-        LangExtAssert.Equal(Right<Loan>(new Loan(memberId, soughtIsbn)), result);
+        LangExtAssert.Equal(Right(new Loan(memberId, soughtIsbn)), result);
     }
 
     [Fact]
@@ -192,6 +191,8 @@ public class KataLibraryTests
     {
         var library = new Library();
         var member = new Member(new MemberId(6041), "Marc Salazar");
+        
+        // ReSharper disable once UnusedLocalFunctionReturnValue
         Book AddAndBorrow(string isbnText)
         {
             var b = new Book(Isbn.Create(isbnText).ThrowIfFail(), "Don't care");
@@ -211,6 +212,21 @@ public class KataLibraryTests
         
         Either<BorrowError, Loan> expected = Left(BorrowError.MemberAtLimit);
         LangExtAssert.Equal(expected, actual);
+    }
+
+    [Fact]
+    public void BookAvailable_Checkout_BookCheckedOut()
+    {
+        var library = new Library();
+        var isbnText = "978-1-912496-09-9";
+        var soughtIsbn = Isbn.Create(isbnText).ThrowIfFail();
+        var book = new Book(soughtIsbn, "nam fugit sed");
+        library.AddBook(book);
+
+        var member = new Member(new MemberId(5187), "Robert Cook");
+        var actual = library.Checkout(isbnText, member);
+        
+        LangExtAssert.Equal(Right(new Loan(new MemberId(5187), soughtIsbn)), actual);
     }
 }
 
@@ -242,6 +258,16 @@ public class Library
         _loans.Add(book.Id, loan);
         return Right(loan);
     }
+
+    public Either<CheckoutError, Loan> Checkout(string rawIsbn, Member member) =>
+        Left((CheckoutError) new CannotBorrow(BorrowError.AlreadyOnLoan));
+        /*
+        RequireBook(rawIsbn)
+            .ToEither()
+            .MapLeft(CheckoutError (e) => new NotFound(e))
+            .Bind(book => Borrow(book, member)
+                      .MapLeft(CheckoutError (be) => new CannotBorrow(be)));
+                      */
 
     // Idiomatic code for translating a C# value that could return `null` into an `Option` type.
     //
@@ -291,7 +317,7 @@ public readonly record struct Isbn
             return FinFail<Isbn>(Error.New($"ISBN must only contain digits: {noDashCandidateIsbn}."));
         }
 
-        return FinSucc<Isbn>(new Isbn(noDashCandidateIsbn));
+        return FinSucc(new Isbn(noDashCandidateIsbn));
     }
 }
 
@@ -302,6 +328,11 @@ public enum BorrowError
     AlreadyOnLoan,
     MemberAtLimit,
 }
+
+public abstract record CheckoutError;
+public sealed record NotFound(Error error) : CheckoutError;
+
+public sealed record CannotBorrow(BorrowError Reason) : CheckoutError;
 
 public readonly record struct MemberId(int Value);
 
