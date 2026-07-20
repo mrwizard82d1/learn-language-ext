@@ -228,6 +228,20 @@ public class KataLibraryTests
         
         LangExtAssert.Equal(Right(new Loan(new MemberId(5187), soughtIsbn)), actual);
     }
+
+    [Fact]
+    public void BadIsbn_Checkout_ReturnsLeftNotFound()
+    {
+        var library = new Library();
+        var member = new Member(new MemberId(6227), "Johnathan Hamilton");
+
+        var actual = library.Checkout("978-1-970099-05-", member);
+        
+        // NotFound wraps an Error whose equality is "message-brittle"; therefore, assert the **shape**
+        Assert.True(actual.Match(
+                        Right: _ => false, 
+                        Left: e => e is NotFound));
+    }
 }
 
 public class Library
@@ -260,14 +274,11 @@ public class Library
     }
 
     public Either<CheckoutError, Loan> Checkout(string rawIsbn, Member member) =>
-        Left((CheckoutError) new CannotBorrow(BorrowError.AlreadyOnLoan));
-        /*
         RequireBook(rawIsbn)
             .ToEither()
             .MapLeft(CheckoutError (e) => new NotFound(e))
             .Bind(book => Borrow(book, member)
                       .MapLeft(CheckoutError (be) => new CannotBorrow(be)));
-                      */
 
     // Idiomatic code for translating a C# value that could return `null` into an `Option` type.
     //
