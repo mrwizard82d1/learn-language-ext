@@ -242,6 +242,23 @@ public class KataLibraryTests
                         Right: _ => false, 
                         Left: e => e is NotFound));
     }
+
+    [Fact]
+    public void BookAlreadyOnLoan_Checkout_ReturnsLeftCannotBorrow()
+    {
+        var library = new Library();
+        var soughtIsbn = "978-1-214-22052-1";
+        var isbn = Isbn.Create(soughtIsbn).ThrowIfFail();
+        library.AddBook(new Book(isbn, "natus repundiandae nemo"));
+        library.Checkout(soughtIsbn, new Member(new MemberId(732), "Cesar Gray"));
+        
+        var actual = library.Checkout(soughtIsbn,  
+                                      new Member(new MemberId(9524), "Ginny Robles"));
+
+        Either<CheckoutError, Loan> expected = 
+            Left((CheckoutError)new CannotBorrow(BorrowError.AlreadyOnLoan));
+        LangExtAssert.Equal(expected, actual);
+    }
 }
 
 public class Library
