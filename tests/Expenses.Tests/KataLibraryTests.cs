@@ -292,6 +292,25 @@ public class KataLibraryTests
         
         LangExtAssert.Equal($"Not found: No book with ISBN 9780694803378 found.", description);
     }
+
+    [Fact]
+    public void BookAlreadyCheckedOut_Describe_ReportCannotBorrow()
+    {
+        var library = new Library();
+        var member = new Member(new MemberId(1324), "Lori Collins");
+        var isbnText = "978-1-386-72576-3";
+        var isbn = Isbn.Create(isbnText).ThrowIfFail();
+        var soughtBook = new Book(isbn, "repediandae vel dolores");
+        library.AddBook(soughtBook);
+
+        library.Checkout(isbnText, member);
+
+        var requester = new Member(new MemberId(7382), "Jessica Bryan");
+        var result = library.Checkout(isbnText, member);
+        var description = Library.Describe(result);
+        
+        LangExtAssert.Equal($"Cannot borrow: AlreadyOnLoan", description);
+    }
 }
 
 public class Library
