@@ -259,6 +259,23 @@ public class KataLibraryTests
             Left((CheckoutError)new CannotBorrow(BorrowError.AlreadyOnLoan));
         LangExtAssert.Equal(expected, actual);
     }
+
+    [Fact]
+    public void BookCheckedOut_Describe_ReportLoan()
+    {
+        var library = new Library();
+        var member = new Member(new MemberId(3560), "Jamie Bray");
+        var isbnText = "978-1-67715-286-5";
+        var isbn = Isbn.Create(isbnText).ThrowIfFail();
+        var soughtBook = new Book(isbn, "omnis voluptatum beatae");
+        library.AddBook(soughtBook);
+
+        var loan = library.Checkout(isbnText, member);
+
+        var description = Library.Describe(loan);
+        
+        LangExtAssert.Equal($"Loaned 9781677152865 to member 3560", description);
+    }
 }
 
 public class Library
@@ -296,6 +313,16 @@ public class Library
             .MapLeft(CheckoutError (e) => new NotFound(e))
             .Bind(book => Borrow(book, member)
                       .MapLeft(CheckoutError (be) => new CannotBorrow(be)));
+
+    public static string Describe(Either<CheckoutError, Loan> checkoutResult) =>
+        checkoutResult.Match(
+            Right: loan => $"Loaned {loan.BookIsbn.Value} to member {loan.BorrowerId.Value}", 
+            Left: error => error switch
+            {
+                NotFound nf => $"Not found: {nf.error.Message}",
+                CannotBorrow cb => $"Cannot borrow: {cb.Reason}",
+                _ => "Unknown error",
+            });
 
     // Idiomatic code for translating a C# value that could return `null` into an `Option` type.
     //
