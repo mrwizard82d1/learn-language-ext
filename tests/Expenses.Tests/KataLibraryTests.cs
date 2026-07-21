@@ -276,6 +276,22 @@ public class KataLibraryTests
         
         LangExtAssert.Equal($"Loaned 9781677152865 to member 3560", description);
     }
+
+    [Fact]
+    public void NoBookWithIsbn_Describe_ReportNotFound()
+    {
+        var library = new Library();
+        var member = new Member(new MemberId(3809), "Lauren Mooney");
+        var isbnText = "978-0-694-80337-8";
+        var isbn = Isbn.Create(isbnText).ThrowIfFail();
+        var soughtBook = new Book(isbn, "est veritatis provident");
+
+        var loan = library.Checkout(isbnText, member);
+
+        var description = Library.Describe(loan);
+        
+        LangExtAssert.Equal($"Not found: No book with ISBN 9780694803378 found.", description);
+    }
 }
 
 public class Library
