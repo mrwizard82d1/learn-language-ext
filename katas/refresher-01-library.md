@@ -18,9 +18,14 @@
 
   **Key insight:** `Either<L,R>` **compares its `Left` value** in equality (verified), so a domain error can be asserted directly: `LangExtAssert.Equal(Left(BorrowError.AlreadyOnLoan), result)` — *unlike* `Fin`, which ignores its `Error` (there you need `IsFail`+`Match`). Precise assertability is a reason `Either<L,R>` beats `Fin` for domain failures. Sequential guards = first-failure-wins short-circuit (accumulating all needs `Validation`).
 
-### ▶ Resume here — Task 5 (finale)
+- **Task 5 — ✅ core done.** `Checkout(string rawIsbn, Member member) → Either<CheckoutError, Loan>` (chose **Option B**: unify on a typed `CheckoutError` union — `NotFound(Error)` | `CannotBorrow(BorrowError)` — to preserve typed errors). Chain: `RequireBook(rawIsbn).ToEither().MapLeft(e => (CheckoutError)new NotFound(e)).Bind(book => Borrow(book, member).MapLeft(be => (CheckoutError)new CannotBorrow(be)))`. Three tests: happy→`Right(loan)`; bad ISBN→`Left(NotFound)` (asserted by *shape*, `is NotFound`, since `Error` compares by message); already-on-loan→`Left(CannotBorrow(AlreadyOnLoan))` (asserted by exact value — `Either` compares `Left`). **39 green.**
 
-- [ ] **Task 5 — `Checkout(string rawIsbn, Member member) → …`:** compose the whole flow — parse ISBN → require the book → borrow it — short-circuiting on the first failure, then `Match` to a friendly `string` ("Loaned '…' to …" / the failure reason). **The crux:** the steps return *different* elevated types — `RequireBook` is `Fin<Book>` (error = `Error`), `Borrow` is `Either<BorrowError, Loan>`. To `Bind` them into one chain you must **reconcile** onto a single type/error representation (e.g. `MapLeft`/`BiMap` to align errors, or pick one error type for the flow). This reconciliation is the point — lean in / discuss options first.
+  **Key insights (now in `phases/phase-02-either-fin.md` Notes → "two-track model"):** `Map` = success track, `MapLeft` = failure track, `Bind` = advance-success-or-short-circuit (= Map + flatten). The `(CheckoutError)` casts widen union cases to the base so both `MapLeft`s produce `Either<CheckoutError,_>` and `Bind` threads them. Larry worked hard to articulate the control flow — landed it over ~3 commits ("very dimly" → correct in his own words).
+
+### ▶ Resume here
+
+- [ ] **(Optional) Task 5 closer:** `Describe(Either<CheckoutError, Loan>) → string` — a friendly `Match` (`"Loaned … to …"` / failure message; `switch` on the `CheckoutError` union). Gentle presentation step; then the kata is fully done.
+- [ ] **Kata essentially complete** — every type (`Option`/`Either`/`Fin`) + the hard heterogeneous reconciliation covered. **Natural main-line next: Phase 3 (`Validation`)** — accumulate *all* errors instead of short-circuiting on the first (the direct sequel to the kata's short-circuit theme). Phase 3 doc not yet authored.
 
 ## Rules of engagement
 
