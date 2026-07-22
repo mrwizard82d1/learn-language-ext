@@ -26,7 +26,7 @@ By the end you should be able to:
 
 - [x] Phase 0 — Setup
 - [x] Phase 1 — `Option<T>` the LanguageExt way
-- [ ] Phase 2 — `Either<L, R>` and `Fin<T>`
+- [x] Phase 2 — `Either<L, R>` and `Fin<T>` *(concepts completed via the refresher kata `katas/refresher-01-library.md`; main-line ExpenseParser stopped at Step 2)*
 - [ ] Phase 3 — `Validation<F, S>`
 - [ ] Phase 4 — Persistent collections (LanguageExt flavor)
 - [ ] Phase 5 — LINQ-style composition
