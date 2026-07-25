@@ -58,8 +58,8 @@ Kent Beck style — adjust freely.
 - [x] `ParseAmount` returns `Right(value)` for a valid number
 - [x] `ParseAmount` returns `Left(reason)` for garbage
 - [x] `Match` runs the right branch for `Right` vs `Left`; `IfLeft` supplies a fallback
-- [ ] `Map` transforms `Right`, passes `Left` through (right-bias)
-- [ ] `Bind` chains a second fallible step; a `Left` anywhere short-circuits
+- [x] `Map` transforms `Right`, passes `Left` through (right-bias)
+- [x] `Bind` chains a second fallible step; a `Left` anywhere short-circuits
 - [ ] `ParseDate` returns `FinSucc(date)` / `FinFail(Error)`; `Match(Succ:, Fail:)`
 - [ ] `Error.New(msg)` carries the message; `Error.New(ex)` is `IsExceptional`
 - [ ] `ParseEntry` composes date + amount with `Bind`, short-circuiting on the first bad field
