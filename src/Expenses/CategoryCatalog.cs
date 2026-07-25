@@ -1,5 +1,4 @@
 using LanguageExt;
-using static LanguageExt.Prelude;
 
 namespace Expenses;
 
