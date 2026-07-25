@@ -335,4 +335,83 @@ RequireBook(rawIsbn)                                  // Fin<Book>
 
 Same three verbs recur for `Option`, `Fin`, `Validation` — only `Either` exposes both `Map` (right) and `MapLeft` (left) prominently because it's the two-sided one.
 
+### Design philosophy: OO cohesion vs FP's "100 functions on one data structure"
+
+**My musing (verbatim):**
+
+> When I first started programming, I was strongly influence by the Wirth's book on Pascal and separating "programs" from "data". When I first encountered object-oriented code, after applying Wirth's "maxim" but using C, I had "discovered" that, often, a single data structure was "surrounded" by several functions that operated on that data structure (with additional influence from SICP). Putting these things together made sense (consider Bob Martin's idea that "things that change together are commited together"). Functional programming is different from but related to Wirth's idea, but, seemingly, combined with Wirth's next big idea of "modules" - except that Clojure demonstrates that one can apply the same functional ideas to **many, different (but related) data structures**. I think there is something there, but it feels just beyond my grasp....
+
+**Response — three named ideas I was circling:**
+
+- **Perlis's epigram (from SICP's foreword):** *"It is better to have 100 functions operate on one data structure than 10 functions operate on 10 data structures."* OO trends toward **10×10** (many bespoke *types*, each with its own methods); FP/Clojure toward **100×1** (a few general data shapes + a large library of generic functions over them). "Same functional ideas across many data structures" = feeling the 100×1 world.
+
+- **The arc, named:**
+  - *Wirth:* **separate** algorithm from data (`Algorithms + Data Structures = Programs`).
+  - *OO (my C→objects discovery):* **re-couple** them — cohesion **"by type"** (data + its methods); unit of modularity = the **type/object**. (Bob Martin's "changes together" pushes here.)
+  - *FP/Clojure:* **separate again**, but re-cohere at a higher level — **"an abstraction + all the generic functions over it"**; unit of modularity = the **operation/abstraction**; one function serves *many* concrete structures.
+  - So OO groups code **by the type it belongs to**; FP groups code **by the operation and the abstraction it targets.** Two different axes of cohesion, not enemies.
+
+- **The Expression Problem (Wadler) — the "just beyond my grasp" bit.** Two axes of change: add a new *type* vs add a new *operation*. **OO makes adding types easy, operations hard; FP makes adding operations easy, types hard** — duals; you pay on opposite axes. Languages that aim to be open on *both*: **Clojure** (protocols / multimethods over plain data) and **Haskell/LanguageExt** (**typeclasses** — `Functor`/`Monad`/`Foldable`: a generic function written once against the abstraction, many concrete types opt in).
+
+**Why it matters here (I'm living in it):** `Map`, `Bind`, `Match`, `Fold` are the "100 functions"; `Option`, `Either`, `Fin`, `Validation`, `Seq`, `Map<K,V>` are the "many data structures." The reason `Map`/`Bind` **transfer** across all of them — kata `Bind` intuition working on `Either` *and* `Fin` *and* `Option` — is that they're all **Functors/Monads**, and the ops are written to that *abstraction*, not to any one type. That transfer *is* Perlis's 100×1 + typeclasses, concrete in C#. It's also why this tutorial says "learn `Map`/`Bind`/`Match` once, apply everywhere."
+
+**One-line synthesis:** OO cohesion = "one type, its operations" (group by data); FP/Clojure cohesion = "one operation, its abstraction, many types" (group by behavior over a shared shape) — and the Expression Problem says each buys easy extension on the axis the other makes hard. LanguageExt is the FP side ported into C#: a small set of universal operations over a family of "elevated" data types.
+
+**References:**
+- Philip Wadler, *"The Expression Problem"* (1998) — the canonical statement. <https://homepages.inf.ed.ac.uk/wadler/papers/expression/expression.txt>
+- Alan J. Perlis, *"Epigrams on Programming"* (1982, ACM SIGPLAN Notices) — source of "100 functions on one data structure…". (Perlis also wrote SICP's foreword; the epigram itself is from this paper — a small correction to my earlier "SICP foreword" attribution.)
+- Rich Hickey, talks *"Simple Made Easy"* (2011) and *"The Value of Values"* (2012) — the Clojure "plain data + generic functions" philosophy.
+
+### Combining OO and FP in one codebase (is the axis-duality a reason *not* to mix?)
+
+**My reflection (verbatim):**
+
+> Object-oriented programming and functional programming "focus on" one of two different axes. Do these axes mean that combining the two approaches in one code base is, generally, a bad idea (requires the human reader to "grok" both paradigms)? I think, generally, that conclusion is too string [strong]. I have professional found success in using both LINQ and Rx - both of which rely heavily on using "functions" but typically in the context of an object-oriented code base. I, and I believe others, have found this kind of code understandable and maintainable - although I recognize it uses the "simplest" form of functional programming (functions are first class). It seems like the ideas of combining functions (composition) and other ideas from functional programming are, perhaps, more difficult for "OO-practioners" to fully grok, but are the high-leverage points of functional programming.
+
+**Response:**
+- **"Too strong" is right.** The Expression Problem describes an *extensibility trade-off within a design* (add-types-easy vs add-ops-easy) — **not** a warning against mixing paradigms. "Dual axes" ≠ "don't mix."
+- **Mixing is mainstream and usually a strength — each at its best granularity:** OO for large-scale *structure* (components, boundaries, encapsulation, wiring); FP for *computation in the small* (pipelines, composition, immutability). Different scales → complementary.
+- **LINQ/Rx is the sweet spot:** first-class functions + composition applied *locally* where data flows, without restructuring the OO app — FP's highest-leverage, lowest-friction export.
+- **Cost of mixing scales with (a) how *deep* into FP you go and (b) how *inconsistent* the boundaries are — not with mixing itself.** Friction: mutation/effects sneaking into "pure" pipelines; and forcing the *deep end* (monads/typeclasses/HKT) on a team that hasn't opted in (why this tutorial excludes it). `Option`/`Either`/`Fin` sit in the middle.
+- **The twist:** **LINQ query syntax *is* monadic composition** — `from…from…select` desugars to `SelectMany` = **`Bind`**. So the "high-leverage composition" that's hard-to-grok is something I've *already* done for years, specialized to `IEnumerable`. The leap is *generalizing* `Bind` from sequences (LINQ) to `Option`/`Either`/`Fin` (LanguageExt) — **Phase 5** shows LINQ query syntax over these types.
+- **Net:** combine deliberately — right tool at the right scale, clear boundaries, FP *depth* matched to team fluency. Multi-paradigm is a feature.
+
+### FP and system architecture (functional core / imperative shell; Clean Architecture)
+
+**My reflection (verbatim):**
+
+> I've had some success (the Orchid Python API available on GitHub) in combining the two ideas using the "functional core, imperative shell" idea (a bit different, I think, from the idea you expressed of "FP for computation" (but maybe not really different as I think about it more)). I think, too, I've been very intrigued by ideas that architectures like Martin's "Clean Architecture" are amenable to "functional in part - OO in part" but a bit less certain. Although my experience using Rx for the Orchid product successfully introduced functional programming into a code base whose domain layer was mostly implemented using OO.
+
+**Response:**
+- **FC/IS *is* "FP for computation," named at architecture scale.** Gary Bernhardt's *"Boundaries"* (2012): a **pure functional core** (all logic — deterministic, no I/O, trivially testable) wrapped by a **thin imperative shell** (I/O, DB, UI — the effects). So "maybe not really different" is correct — same principle, architectural name.
+- **The elevated types are the core's vocabulary.** `Option`/`Either`/`Fin`/`Validation` let the core express absence/failure *as values* → the core stays **pure and total**; the **shell** runs the core and `Match`es the result at the boundary. ROP + FC/IS = one picture: pure railway core, effectful shell.
+- **Clean Architecture is highly FP-amenable** — the Dependency Rule (deps point inward; frameworks/I/O outside; business logic independent) is FC/IS **at module scale**. Inner rings (entities, use cases) = functional core (pure domain, immutable types, elevated-value-returning); outer rings (adapters, frameworks) = imperative shell. So "functional inner rings, OO outer rings" is natural.
+- **Nuances (why "less certain" is fair):** FC/IS is fine-grained (function purity), Clean Architecture coarse-grained (module dependency) — they *rhyme*, and you nest FC/IS *within* a use case. And FP often expresses a "port" as a **function type** (or effects-as-data) rather than an OO interface + DI — Mark Seemann calls FC/IS the *functional take on Ports & Adapters* ("dependency rejection": keep the core pure, decide effects in the shell). Compatible with Clean Architecture, different flavor.
+- **The architectural takeaway:** biggest FP wins aren't "rewrite in FP" — they're (1) **purify the core** (testable/reason-able), (2) **make failure/absence explicit as values** (composable, visible in signatures), (3) **push effects to a thin shell.** Orchid/Rx (reactive edges on an OO domain) is this in practice — FP introduced where it's highest-leverage, no rewrite.
+
+**References:**
+- Gary Bernhardt, *"Boundaries"* (2012) — functional core, imperative shell.
+- Scott Wlaschin, *Domain Modeling Made Functional* (2018) — DDD/architecture done functionally; also the ROP source.
+- Mark Seemann — *"Functional architecture is Ports and Adapters"* / *"Dependency rejection"* (blog) — FC/IS as the functional take on Clean/Hexagonal.
+- Robert C. Martin, *Clean Architecture* (2017) — the OO baseline; Alistair Cockburn's Hexagonal (Ports & Adapters) is its FP-friendly sibling.
+
+#### Addendum — Hexagonal Architecture (Ports & Adapters): sources & the FP link
+
+**Cockburn's canonical material — the site *moved*, it's not lost:**
+- New official home: <https://alistaircockburn.com/Articles/Hexagonal-Architecture>
+- Original personal-wiki page (still resolves): <https://alistair.cockburn.us/hexagonal-architecture/>
+- History: idea originated **~1994** (Portland Pattern Repository / c2 wiki); Cockburn renamed it **"Ports and Adapters"** and published the canonical write-up in **2005** (exact day/month unverified; "hexagon" = his *drawing convention*, not "six of anything").
+- Book: ***Hexagonal Architecture Explained***, Alistair Cockburn & Juan Manuel Garrido de Paz, **2024** (ISBN 978-1-7375197-8-2). Companion site (Garrido de Paz): <https://jmgarridopaz.github.io/> (incl. a Cockburn interview).
+
+**Why it's the "FP-friendly sibling" (sourced):**
+- **Mark Seemann, *"Functional architecture is Ports and Adapters"* (2016-03-18)** — <https://blog.ploeh.dk/2016/03/18/functional-architecture-is-ports-and-adapters/>. The clean citation for the claim: in FP a function's *type signature* declares pure vs impure, so `IO`/effects are **forced to the boundary (adapters)** while pure domain logic forms the core — structurally identical to Ports & Adapters. Good functional design lands in P&A "by default" (a "pit of success").
+- Seemann, ***"Dependency rejection"*** (2017-02-02, <https://blog.ploeh.dk/2017/02/02/dependency-rejection/>) & "From DI to dependency rejection" (2017-01-27) — FP replaces DI with composition of pure + impure functions (the *"impureim sandwich"*): keep the core pure, decide effects at the edges. (The "ports as functions, not interfaces" nuance from above.)
+- Seemann NDC talk, *"Functional architecture — the pits of success"* — <https://www.youtube.com/watch?v=US8QG9I1XW0>.
+
+**Related comparisons / treatments:**
+- Johan Martinsson, *"Hexagonal architecture vs Functional core / Imperative shell"* — <http://martinsson-johan.blogspot.com/2021/01/hexagonal-architecture-vs-functional.html> (a direct head-to-head of the two).
+- Gary Bernhardt, *"Boundaries"* — <https://www.destroyallsoftware.com/talks/boundaries> (origin of "functional core, imperative shell").
+- Scott Wlaschin, *"Six approaches to dependency injection"* — <https://fsharpforfunandprofit.com/posts/dependencies/> (FP's take on ports/dependencies at the boundary).
+- *Increment*, *"A primer on functional architecture"* — <https://increment.com/software-architecture/primer-on-functional-architecture/>.
+
 -
