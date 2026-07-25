@@ -2,6 +2,7 @@ namespace Expenses.Tests;
 
 using System.Globalization;
 using LanguageExt;
+using LanguageExt.Common;
 using static LanguageExt.Prelude;
 
 public static class ExpenseParser
@@ -11,6 +12,11 @@ public static class ExpenseParser
         decimal.TryParse(s, NumberStyles.Number, CultureInfo.InvariantCulture, out var d) 
             ? Right(d) 
             : Left($"Bad amount: '{s}'");
+
+    public static Fin<DateOnly> ParseDate(string s) =>
+        DateOnly.TryParse(s, CultureInfo.InvariantCulture, out var dt)
+            ? FinSucc(dt)
+            : FinFail<DateOnly>(Error.New($"Bad date: '{s}'"));
 }
 public class ExpenseParserTests
 {
@@ -78,5 +84,21 @@ public class ExpenseParserTests
         LangExtAssert.Equal(Left<string, decimal>("Bad amount: 'x'"),
                                 ExpenseParser.ParseAmount("x")
                                              .Bind(Positive));
+    }
+
+    [Fact]
+    public void ParseDate_Fin_SuccessAndFail()
+    {
+        LangExtAssert.Equal(FinSucc(new DateOnly(1993, 1, 30)), 
+            ExpenseParser.ParseDate("1993-01-30"));
+
+        var failed = ExpenseParser.ParseDate("2017-Fed-16");
+        Assert.True(failed.IsFail);
+
+        var reason = failed.Match(
+            Succ: d => d.ToLongDateString(),
+            Fail: e => e.Message
+            );
+        Assert.Equal("Bad date: '2017-Fed-16'", reason);
     }
 }
