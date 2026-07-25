@@ -13,6 +13,23 @@ public static class ExpenseParser
             ? Right(d) 
             : Left($"Bad amount: '{s}'");
 
+    public static Fin<decimal> ParseAmount(string s) =>
+        decimal.TryParse(s, NumberStyles.Number, CultureInfo.InvariantCulture, out var d) 
+            ? FinSucc(d) 
+            : FinFail<decimal>(Error.New($"Bad amount: '{s}'"));
+
+    public static Fin<decimal> ParseAmountException(string s)
+    {
+        try
+        {
+            return FinSucc(decimal.Parse(s, NumberStyles.Number, CultureInfo.InvariantCulture));
+        }
+        catch (FormatException fe)
+        {
+            return FinFail<decimal>(Error.New(fe));
+        }
+    }
+
     public static Fin<DateOnly> ParseDate(string s) =>
         DateOnly.TryParse(s, CultureInfo.InvariantCulture, out var dt)
             ? FinSucc(dt)
@@ -100,5 +117,34 @@ public class ExpenseParserTests
             Fail: e => e.Message
             );
         Assert.Equal("Bad date: '2017-Fed-16'", reason);
+    }
+
+    [Fact]
+    public void ParseAmount_Fin_SuccessAndFail()
+    {
+        LangExtAssert.Equal(FinSucc(951.44m), 
+                            ExpenseParser.ParseAmount("951.44"));
+
+        var failed = ExpenseParser.ParseDate("139.40 TOP");
+        Assert.True(failed.IsFail);
+
+        var reason = failed.Match(
+            Succ: d => d.ToLongDateString(),
+            Fail: e => e.Message
+        );
+        Assert.Equal("Bad date: '139.40 TOP'", reason);
+    }
+
+    [Fact]
+    public void ParseAmountException_Fin_IsExceptional()
+    {
+        var failed = ExpenseParser.ParseAmountException("636.70MAD");
+        Assert.True(failed.IsFail);
+
+        var err = failed.Match(
+            Succ: _ => Error.New("Totally unexpected"),
+            Fail: e => e
+        );
+        Assert.True(err.IsExceptional);
     }
 }

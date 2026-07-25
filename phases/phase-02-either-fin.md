@@ -60,8 +60,8 @@ Kent Beck style — adjust freely.
 - [x] `Match` runs the right branch for `Right` vs `Left`; `IfLeft` supplies a fallback
 - [x] `Map` transforms `Right`, passes `Left` through (right-bias)
 - [x] `Bind` chains a second fallible step; a `Left` anywhere short-circuits
-- [ ] `ParseDate` returns `FinSucc(date)` / `FinFail(Error)`; `Match(Succ:, Fail:)`
-- [ ] `Error.New(msg)` carries the message; `Error.New(ex)` is `IsExceptional`
+- [x] `ParseDate` returns `FinSucc(date)` / `FinFail(Error)`; `Match(Succ:, Fail:)`
+- [x] `Error.New(msg)` carries the message; `Error.New(ex)` is `IsExceptional`
 - [ ] `ParseEntry` composes date + amount with `Bind`, short-circuiting on the first bad field
 - [ ] *(stretch)* conversions: `.ToOption()`, `Either` ↔ `Fin`, `MapLeft`/`BiMap`
 
@@ -138,7 +138,7 @@ public void Either_Match_And_IfLeft()
 
 `Match(Right:, Left:)` is the balanced fold (named args → order-independent, same as Phase 1). `IfLeft(fallback)` is the `Either` analogue of `Option.IfNone` — extract the `Right`, or this fallback on `Left`. (There's a symmetric `IfRight` too.)
 
-### Step 3 — Right-bias: `Map` and `Bind` short-circuit on `Left`  `[ ]`
+### Step 3 — Right-bias: `Map` and `Bind` short-circuit on `Left`  `[x]`
 
 ```csharp
 [Fact]
@@ -166,7 +166,7 @@ public void Either_Bind_ChainsFallibleStep_AndShortCircuits()
 
 This is Railway Oriented Programming concretely: `Map` for a *plain* transform (`A → B`) on the success track, `Bind` for a *fallible* step (`A → Either<L, B>`). Any `Left` skips the rest and carries its reason to the end. (Exactly the Phase 1 `Option` short-circuit, now with an error payload. Decision rule from the Phase 1 "two worlds" notes applies unchanged.)
 
-### Step 4 — Introduce `Fin<T>`: `ParseDate`, and migrate `ParseAmount`  `[ ]`
+### Step 4 — Introduce `Fin<T>`: `ParseDate`, and migrate `ParseAmount`  `[x]`
 
 `Fin<A>` = `Either<Error, A>`. Add `using LanguageExt.Common;` for `Error`. New fallible parse:
 
