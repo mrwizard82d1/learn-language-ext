@@ -55,9 +55,9 @@ The throughline from Phase 1: `Bind` still short-circuits, but where `Option` co
 
 Kent Beck style — adjust freely.
 
-- [ ] `ParseAmount` returns `Right(value)` for a valid number
-- [ ] `ParseAmount` returns `Left(reason)` for garbage
-- [ ] `Match` runs the right branch for `Right` vs `Left`; `IfLeft` supplies a fallback
+- [x] `ParseAmount` returns `Right(value)` for a valid number
+- [x] `ParseAmount` returns `Left(reason)` for garbage
+- [x] `Match` runs the right branch for `Right` vs `Left`; `IfLeft` supplies a fallback
 - [ ] `Map` transforms `Right`, passes `Left` through (right-bias)
 - [ ] `Bind` chains a second fallible step; a `Left` anywhere short-circuits
 - [ ] `ParseDate` returns `FinSucc(date)` / `FinFail(Error)`; `Match(Succ:, Fail:)`
