@@ -34,6 +34,11 @@ public static class ExpenseParser
         DateOnly.TryParse(s, CultureInfo.InvariantCulture, out var dt)
             ? FinSucc(dt)
             : FinFail<DateOnly>(Error.New($"Bad date: '{s}'"));
+
+    public static Fin<ExpenseEntry> ParseEntry(string date, string amount, string category, string description)
+    {
+        return FinFail<ExpenseEntry>("Placeholder error");
+    }
 }
 public class ExpenseParserTests
 {
@@ -147,4 +152,17 @@ public class ExpenseParserTests
         );
         Assert.True(err.IsExceptional);
     }
+
+    [Fact]
+    public void ParseEntry_AllValid_ReturnsSuccess()
+    {
+        Fin<ExpenseEntry> result = ExpenseParser.ParseEntry("2022-10-14", "887.04", "saepe", "quam");
+        
+        LangExtAssert.Equal(
+            FinSucc(new ExpenseEntry(new DateOnly(2022, 10, 14), 
+                                     887.04m, "saepe",  "quam")),
+            result);
+    }
 }
+
+public sealed record ExpenseEntry(DateOnly Date, decimal Amount, string Category, string Description);
