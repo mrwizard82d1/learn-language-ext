@@ -183,6 +183,18 @@ public class ExpenseParserTests
                          Succ: _ => "Unexpected success",
                          Fail: e => e.Message));
     }
+
+    [Fact]
+    public void ParseEntry_ShortCircuitsIncorrectlyIfBothBad()
+    {
+        // bad date fails before amount is even parsed
+        var badDateAndAmount = 
+            ExpenseParser.ParseEntry("1987-05-0135", "594.2b", "eos", "distinctio");
+        Assert.Equal("Bad date: '1987-05-0135'",
+                     badDateAndAmount.Match(
+                         Succ: _ => "Unexpected success",
+                         Fail: e => e.Message));
+    }
 }
 
 public sealed record ExpenseEntry(DateOnly Date, decimal Amount, string Category, string Description);
