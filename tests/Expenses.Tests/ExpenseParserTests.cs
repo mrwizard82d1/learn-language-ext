@@ -1,45 +1,9 @@
 namespace Expenses.Tests;
 
-using System.Globalization;
 using LanguageExt;
 using LanguageExt.Common;
 using static LanguageExt.Prelude;
 
-public static class ExpenseParser
-{
-    // Correct behavior.
-    public static Either<string, decimal> ParseAmountEither(string s) =>
-        decimal.TryParse(s, NumberStyles.Number, CultureInfo.InvariantCulture, out var d) 
-            ? Right(d) 
-            : Left($"Bad amount: '{s}'");
-
-    public static Fin<decimal> ParseAmount(string s) =>
-        decimal.TryParse(s, NumberStyles.Number, CultureInfo.InvariantCulture, out var d) 
-            ? FinSucc(d) 
-            : FinFail<decimal>(Error.New($"Bad amount: '{s}'"));
-
-    public static Fin<decimal> ParseAmountException(string s)
-    {
-        try
-        {
-            return FinSucc(decimal.Parse(s, NumberStyles.Number, CultureInfo.InvariantCulture));
-        }
-        catch (FormatException fe)
-        {
-            return FinFail<decimal>(Error.New(fe));
-        }
-    }
-
-    public static Fin<DateOnly> ParseDate(string s) =>
-        DateOnly.TryParse(s, CultureInfo.InvariantCulture, out var dt)
-            ? FinSucc(dt)
-            : FinFail<DateOnly>(Error.New($"Bad date: '{s}'"));
-
-    public static Fin<ExpenseEntry> ParseEntry(string date, string amount, string category, string description) =>
-        ParseDate(date)
-            .Bind(d =>
-                      ParseAmount(amount).Map(amt => new ExpenseEntry(d, amt, category, description)));
-}
 public class ExpenseParserTests
 {
     [Fact]
@@ -196,5 +160,3 @@ public class ExpenseParserTests
                          Fail: e => e.Message));
     }
 }
-
-public sealed record ExpenseEntry(DateOnly Date, decimal Amount, string Category, string Description);

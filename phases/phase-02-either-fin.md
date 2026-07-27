@@ -244,7 +244,7 @@ The nested `Bind`/`Map` reads as: "parse the date; *then* parse the amount; *the
 
 > **Foreshadow (Phase 5):** that nested `Bind`/`Map` pyramid is exactly what LINQ query syntax flattens — `from d in ParseDate(date) from a in ParseAmount(amount) select new ExpenseEntry(...)`. We'll get there; seeing the explicit form first makes the sugar obvious.
 
-### Step 6 — Refactor: extract to production code  `[ ]`
+### Step 6 — Refactor: extract to production code  `[x]`
 
 Green ⇒ promote. Move into `src/Expenses`:
 - `src/Expenses/ExpenseEntry.cs` — the `record` (namespace `Expenses`).
