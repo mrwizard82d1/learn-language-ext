@@ -62,7 +62,7 @@ Kent Beck style — adjust freely.
 - [x] `Bind` chains a second fallible step; a `Left` anywhere short-circuits
 - [x] `ParseDate` returns `FinSucc(date)` / `FinFail(Error)`; `Match(Succ:, Fail:)`
 - [x] `Error.New(msg)` carries the message; `Error.New(ex)` is `IsExceptional`
-- [ ] `ParseEntry` composes date + amount with `Bind`, short-circuiting on the first bad field
+- [x] `ParseEntry` composes date + amount with `Bind`, short-circuiting on the first bad field
 - [ ] *(stretch)* conversions: `.ToOption()`, `Either` ↔ `Fin`, `MapLeft`/`BiMap`
 
 ---
