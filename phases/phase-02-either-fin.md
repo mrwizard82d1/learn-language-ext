@@ -203,7 +203,7 @@ You'll need to update the Step 1–3 tests to `Fin` (`FinSucc(...)` instead of `
 
 > When to use which, restated: **`Fin`** when the left is "an error" (message/exception/code — the common case). **`Either<L,R>`** when the left is your own domain type and you want the compiler to track it.
 
-### Step 5 — Compose the entry with `Bind` (short-circuit on first bad field)  `[ ]`
+### Step 5 — Compose the entry with `Bind` (short-circuit on first bad field)  `[x]`
 
 The payoff: combine multiple fallible parses into one. Add the result type and a composing parse:
 
