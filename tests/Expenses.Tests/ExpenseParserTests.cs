@@ -163,6 +163,26 @@ public class ExpenseParserTests
                                      887.04m, "saepe",  "quam")),
             result);
     }
+
+    [Fact]
+    public void ParseEntry_ShortCircuitsOnFirstBadField()
+    {
+        // bad date fails before amount is even parsed
+        var badDateOnly = 
+            ExpenseParser.ParseEntry("1992-04-37", "283.59", "voluptatibus", "fuga");
+        Assert.Equal("Bad date: '1992-04-37'",
+                     badDateOnly.Match(
+                         Succ: _ => "Unexpected success",
+                         Fail: e => e.Message));
+        
+        // good date but bad amount fails at amount
+        var badAmountOnly = 
+            ExpenseParser.ParseEntry("2003-04-09", "287.9a", "magni", "debitis");
+        Assert.Equal("Bad amount: '287.9a'",
+                     badAmountOnly.Match(
+                         Succ: _ => "Unexpected success",
+                         Fail: e => e.Message));
+    }
 }
 
 public sealed record ExpenseEntry(DateOnly Date, decimal Amount, string Category, string Description);
