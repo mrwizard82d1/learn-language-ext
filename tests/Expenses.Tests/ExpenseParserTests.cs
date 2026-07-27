@@ -35,10 +35,10 @@ public static class ExpenseParser
             ? FinSucc(dt)
             : FinFail<DateOnly>(Error.New($"Bad date: '{s}'"));
 
-    public static Fin<ExpenseEntry> ParseEntry(string date, string amount, string category, string description)
-    {
-        return FinFail<ExpenseEntry>("Placeholder error");
-    }
+    public static Fin<ExpenseEntry> ParseEntry(string date, string amount, string category, string description) =>
+        ParseDate(date)
+            .Bind(d =>
+                      ParseAmount(amount).Map(amt => new ExpenseEntry(d, amt, category, description)));
 }
 public class ExpenseParserTests
 {
