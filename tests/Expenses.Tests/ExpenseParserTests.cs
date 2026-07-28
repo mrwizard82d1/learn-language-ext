@@ -159,4 +159,18 @@ public class ExpenseParserTests
                          Succ: _ => "Unexpected success",
                          Fail: e => e.Message));
     }
+
+    [Fact]
+    public void Conversions_BetweenFin_Either_Option()
+    {
+        // Down the ladder (lossy): failure -> None (reason now gone)
+        Assert.True(ExpenseParser.ParseAmount("219.1O").ToOption().IsNone);
+        Assert.Equal(Some(385.59m), ExpenseParser.ParseAmount("385.59").ToOption());
+        
+        // Across (lossless) because it only **reshapes** the error track
+        var coded =
+            // Converts a string message to an "integer code"
+            ExpenseParser.ParseAmountEither("773.3t").MapLeft(msg => msg.Length);
+        Assert.True(coded.IsLeft);
+    }
 }

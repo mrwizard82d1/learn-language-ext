@@ -63,7 +63,7 @@ Kent Beck style — adjust freely.
 - [x] `ParseDate` returns `FinSucc(date)` / `FinFail(Error)`; `Match(Succ:, Fail:)`
 - [x] `Error.New(msg)` carries the message; `Error.New(ex)` is `IsExceptional`
 - [x] `ParseEntry` composes date + amount with `Bind`, short-circuiting on the first bad field
-- [ ] *(stretch)* conversions: `.ToOption()`, `Either` ↔ `Fin`, `MapLeft`/`BiMap`
+- [x] *(stretch)* conversions: `.ToOption()`, `Either` ↔ `Fin`, `MapLeft`/`BiMap`
 
 ---
 
@@ -252,7 +252,7 @@ Green ⇒ promote. Move into `src/Expenses`:
 - Delete the inline copies from the test file; ensure `using Expenses;` is present.
 - Re-run the full suite (Phase 1 tests + smoke canaries included). Green = clean refactor.
 
-### Step 7 — Conversions / interop  `[ ]` *(short)*
+### Step 7 — Conversions / interop  `[x]` *(short)*
 
 Pin how these types interconvert — you'll need this at boundaries:
 
