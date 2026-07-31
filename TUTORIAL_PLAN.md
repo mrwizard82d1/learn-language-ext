@@ -4,7 +4,7 @@
 
 Apply functional-programming discipline to C# using LanguageExt, focused on the types you'll actually reach for in everyday application code: `Option`, `Either`, `Fin`, `Validation`, persistent collections, and LINQ-style composition.
 
-Scope explicitly **excludes** deep effect-system territory — `Eff<RT, A>`, `Aff<RT, A>`, free monads, HKT plumbing. These are interesting but rarely the right tool for typical application code, and they reshape a codebase in ways that don't pay off until the simpler patterns are internalized first.
+Scope explicitly **excludes** deep effect-system territory — `Eff<RT, A>`, `Aff<RT, A>`, free monads, HKT plumbing. These are interesting but rarely the right tool for typical application code, and they reshape a codebase in ways that don't pay off until the simpler patterns are internalized first. On *why* Functor/Applicative/Monad are taught as operations (`Map`/`Bind`/`Apply`) rather than named abstractions — and on the LanguageExt **v5** rewrite that makes those abstractions more visible — see [`FUTURE_DIRECTIONS.md`](FUTURE_DIRECTIONS.md).
 
 By the end you should be able to:
 

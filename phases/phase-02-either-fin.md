@@ -63,7 +63,7 @@ Kent Beck style — adjust freely.
 - [x] `ParseDate` returns `FinSucc(date)` / `FinFail(Error)`; `Match(Succ:, Fail:)`
 - [x] `Error.New(msg)` carries the message; `Error.New(ex)` is `IsExceptional`
 - [x] `ParseEntry` composes date + amount with `Bind`, short-circuiting on the first bad field
- - [x] *(stretch)* conversions: `.ToOption()`, `Either` ↔ `Fin`, `MapLeft`/`BiMap`
+- [x] *(stretch)* conversions: `.ToOption()`, `Either` ↔ `Fin`, `MapLeft`/`BiMap`
 
 ---
 
