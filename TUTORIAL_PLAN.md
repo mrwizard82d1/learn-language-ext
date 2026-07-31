@@ -30,7 +30,7 @@ By the end you should be able to:
 - [ ] Phase 3 — `Validation<F, S>`
 - [ ] Phase 4 — Persistent collections (LanguageExt flavor)
 - [ ] Phase 5 — LINQ-style composition
-- [ ] Phase 6 — Capstone
+- [ ] Phase 6 — Capstone *(direction: functional core / imperative shell, optional Clean Architecture; architecture pre-work + the MediatR/Contoso assessment live in [`FUTURE_DIRECTIONS.md`](FUTURE_DIRECTIONS.md))*
 
 ## Domain: expense tracker
 

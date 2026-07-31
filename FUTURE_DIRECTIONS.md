@@ -80,3 +80,31 @@ Ranked path:
 - [~] **Research pass** to pin down current v5 specifics with live URLs: trait names, the `K<F, A>` encoding, Louth's migration guide. *(Partly done 2026-07-31 — §2b covers the `IO<A>` effect-system unification, `MonadIO`, transformers, and version boundary. Still open: the full `K<F,A>` HKT encoding details and a step-by-step migration guide.)*
 - [ ] **Add a short "named abstractions" bridge** to the tutorial — one paragraph per phase (Phase 3 especially) naming the abstraction just used + its law, without derailing the operational focus.
 - [ ] **v5 "what changed and why" mini-phase** as a post-tutorial capstone follow-on, if desired.
+
+---
+
+## Capstone (Phase 6) direction & architecture pre-work
+
+**Decided direction (2026-07-31):** the capstone should implement **functional core / imperative shell**, optionally dressed in **Clean Architecture** layering — errors on the `Fin`/`Validation` rails, dependencies pushed to the edges ("dependency rejection"). Larry recalibrated *away* from leaning on the Contoso samples or MediatR after the research below; they're worth a *read*, not a *foundation*.
+
+### The "Contoso" examples — de-emphasized (research 2026-07-31)
+
+There are **two different Contoso examples**, neither authoritative:
+
+1. **language-ext repo "Contoso University"** — community contribution by **Blake Saucier** (not Louth), merged 2019, pinned to **v3.3.28**. CQRS/**MediatR** web API using `Option`/`Either`/`Validation` + `Task` (pre-`Fin`/`Aff`/`Eff`/v5). **Removed from the current repo** — survives only in old history/forks; never ported. → historical curio only.
+2. **Book *Practical functional C#*** by **Dimitrios Papadimitriou** (not Louth; likely the book Larry's reading — confirm exact title) — has its own "Contoso Clean Architecture with language-ext" chapter and an **MIT companion repo** (`dimitris-papadimitriou-chr/Practical-Functional-CSharp`, `WebApplicationExample`). Independent of #1.
+
+**Three sources, three jobs** (if referenced at all): book's companion repo → *architecture shape* (read with sketch-first method, shape-not-syntax; ~v3/v4-era); repo Contoso University → *peek at MediatR/CQRS shape only*; current repo `Samples/` (`EffectsExamples`, `CardGame`, `DomainTypesExamples`) → *current v5 idioms* (but feature demos, not Clean-Arch apps).
+
+### MediatR — study, don't depend (research 2026-07-31)
+
+- **Licensing:** commercial move is real (launched **2025-07-02**, Lucky Penny Software, not walked back). **Free two ways** regardless: pin **`MediatR 12.5.0`** (last Apache-2.0; ≥13.0.0 is dual RPL-1.5/commercial), or use **13.x Community tier** (free under $5M revenue). So licensing is a non-blocker — but the baggage is a reason not to *build on* it.
+- **FP critique:** routing through `IMediator` is effectively a **Service Locator** (hides dependencies), fighting the functional-core grain. Root idea: Seemann's **"dependency rejection"** — pure functions can't have dependencies, so an impure/pure/impure sandwich leaves nothing to mediate. *(Caveat: Seemann's canonical article doesn't name MediatR; the link is drawn by others, e.g. Arialdo Martini "You probably don't need MediatR.")* The one keeper concept is **pipeline behaviors**.
+- **Functional analog of the mediator:** it collapses into **function composition**; pipeline behaviors → **higher-order functions decorating `Func<TIn, Fin<TOut>>`** (Seemann's "decorating functions"). Same cross-cutting benefit, no library, no license.
+- **Verdict:** *study* MediatR (13.x Community — read a sample, grasp `IRequest`/handlers + pipeline behaviors); *build* the capstone with **direct handler injection or plain function composition returning `Fin`/`Validation`**, and a ~30-line dispatcher (or function decorators) if the pipeline ergonomics are wanted.
+
+### Pre-work method (domain-agnostic, the durable part)
+
+Regardless of what (if anything) gets read: before building, **sketch-first → read → revise**. Write a one-page architecture sketch of the capstone (layers, where parse/validate live, how "generate report" flows, where errors unwrap), *then* read a reference against it, *then* revise. The revised sketch becomes the capstone's design doc. Optional right-sized exercise: implement one use case **two ways** (handler/mediator-style vs. plain functional composition) and compare.
+
+Key references: Seemann [dependency rejection](https://blog.ploeh.dk/2017/02/02/dependency-rejection/); Bernhardt "Boundaries" (functional core / imperative shell); the hexagonal/Clean-Architecture notes in `phases/phase-02-either-fin.md`.
