@@ -31,16 +31,33 @@ public class CoordinateParserTests
         const string nonNumericLatitudeText = "75.3O";
         var nonNumericLatitude = CoordinateParser.ParseLat(nonNumericLatitudeText);
         
-        var result =  nonNumericLatitude.Match(
+        nonNumericLatitude.Match(
             Succ: _ => 
                 throw new InvalidOperationException($"Expected parse failure of '{nonNumericLatitudeText}'. " 
                                                     + "Unexpectedly succeeded."),
             Fail: errorText => Assert.Equal($"Failed to parse latitude: '{nonNumericLatitudeText}'", errorText));
     }
+
+    [Fact]
+    public void LatitudeOutOfRange_ParseLatitude_ReportsError()
+    {
+        const string outOfRangeLatitudeText = "90.00001";
+        var outOfRangeLatitudeResult = CoordinateParser.GetLatitude(outOfRangeLatitudeText);
+        
+        outOfRangeLatitudeResult.Match(
+            Succ: _ => 
+                throw new InvalidOperationException($"Expected parse failure of '{outOfRangeLatitudeText}'. " 
+                                                    + "Unexpectedly succeeded."),
+            Fail: errorText => Assert.Equal($"Parsed latitude, '{outOfRangeLatitudeText}', is out of range", 
+                                            errorText));
+    }
 }
 
 public static class CoordinateParser
 {
+    public static Fin<Latitude> GetLatitude(string latitudeText) =>
+        ParseLat(latitudeText).Bind(Latitude.Create);
+    
     public static Fin<decimal> ParseLat(string latitudeText) =>
         decimal.TryParse(latitudeText,
                          NumberStyles.Float,
@@ -48,4 +65,16 @@ public static class CoordinateParser
                          out var candidateLatitude)
             ? FinSucc(candidateLatitude)
             : FinFail<decimal>(Error.New($"Failed to parse latitude: '{latitudeText}'"));
+}
+
+public readonly record struct Latitude
+{
+    public decimal Degrees { get; }
+
+    private Latitude(decimal degrees) => Degrees = degrees;
+
+    public static Fin<Latitude> Create(decimal degrees) =>
+        degrees is >= -90.0m and <= 90.0m
+            ? FinSucc(new Latitude(degrees))
+            : FinFail<Latitude>(Error.New($"Parsed latitude, '{degrees}', is out of range"));
 }
