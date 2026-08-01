@@ -13,6 +13,7 @@ public class CoordinateParserTests
     
     [Theory]
     [InlineData("45.9")]
+    [InlineData("-41.7")]
     [InlineData("-90.0")]
     [InlineData("90.0")]
     public void ValidLatitudeText_ParseLatitude_SuccessfullyParsed(string latitudeText)
@@ -48,6 +49,45 @@ public class CoordinateParserTests
             Succ: _ => Assert.Fail($"Expected failure but successfully parsed {outOfRangeLatitudeText}"),
             Fail: error => Assert.Contains("is out of range", error.Message));
     }
+    
+    [Theory]
+    [InlineData("165.0")]
+    [InlineData("-138.5")]
+    [InlineData("-180.0")]
+    [InlineData("180.0")]
+    public void ValidLongitudeText_ParseLongitude_SuccessfullyParsed(string longitudeText)
+    {
+        var actual = Longitude.ParseLongitude(longitudeText);
+
+        var expected = decimal.Parse(longitudeText, NumberStyles.Float, CultureInfo.InvariantCulture);
+        actual.Match(Succ: longitude => Assert.Equal(expected, longitude.Degrees),
+                     Fail: error => Assert.Fail(error.Message));
+    }
+
+    [Fact]
+    public void NonNumericLongitudeText_ParseDecimal_ReportsError()
+    {
+        // The letter 'O' not the digit zero '0'
+        const string nonNumericDecimalText = "-83.4f";
+        var nonNumericDecimal = DecimalParser.ParseDecimal(nonNumericDecimalText);
+        
+        nonNumericDecimal.Match(
+            Succ: _ => 
+                throw new InvalidOperationException($"Expected parse failure of '{nonNumericDecimalText}'. " 
+                                                    + "Unexpectedly succeeded."),
+            Fail: error => Assert.Equal($"Failed to parse decimal: '{nonNumericDecimalText}'", error.Message));
+    }
+
+    [Fact]
+    public void LongitudeOutOfRange_ParseLongitude_ReportsError()
+    {
+        const string outOfRangeLongitudeText = "-180.00001";
+        var outOfRangeLongitudeResult = Longitude.ParseLongitude(outOfRangeLongitudeText);
+        
+        outOfRangeLongitudeResult.Match(
+            Succ: _ => Assert.Fail($"Expected failure but successfully parsed {outOfRangeLongitudeText}"),
+            Fail: error => Assert.Contains("is out of range", error.Message));
+    }
 }
 
 public static class CoordinateParser
@@ -68,6 +108,22 @@ public readonly record struct Latitude
         degrees is >= -90.0m and <= 90.0m
             ? FinSucc(new Latitude(degrees))
             : FinFail<Latitude>(Error.New($"Parsed latitude, '{degrees}', is out of range"));
+}
+
+public readonly record struct Longitude
+{
+    public decimal Degrees { get; }
+
+    private Longitude(decimal degrees) => Degrees = degrees;
+
+    public static Fin<Longitude> ParseLongitude(string longitudeText) =>
+        DecimalParser.ParseDecimal(longitudeText)
+                     .Bind(Create);
+
+    public static Fin<Longitude> Create(decimal degrees) =>
+        degrees is >= -180.0m and <= 180.0m
+            ? FinSucc(new Longitude(degrees))
+            : FinFail<Longitude>(Error.New($"Parsed longitude, '{degrees}', is out of range"));
 }
 
 public static class DecimalParser
