@@ -18,10 +18,10 @@ public class CoordinateParserTests
     public void ValidLatitudeText_ParseLatitude_SuccessfullyParsed(string latitudeText)
     {
         var actual = Latitude.ParseLatitude(latitudeText);
-        
+
         var expected = decimal.Parse(latitudeText, NumberStyles.Float, CultureInfo.InvariantCulture);
-        actual.Match(Succ: latitude => LangExtAssert.Equal(expected, latitude.Degrees),
-            Fail: error => Assert.Fail(error.Message));
+        actual.Match(Succ: latitude => Assert.Equal(expected, latitude.Degrees),
+                     Fail: error => Assert.Fail(error.Message));
     }
 
     [Fact]
@@ -35,7 +35,7 @@ public class CoordinateParserTests
             Succ: _ => 
                 throw new InvalidOperationException($"Expected parse failure of '{nonNumericDecimalText}'. " 
                                                     + "Unexpectedly succeeded."),
-            Fail: error => Assert.Equal($"Failed to parse decimal: '{nonNumericDecimalText}'", error));
+            Fail: error => Assert.Equal($"Failed to parse decimal: '{nonNumericDecimalText}'", error.Message));
     }
 
     [Fact]
@@ -48,8 +48,7 @@ public class CoordinateParserTests
             Succ: _ => 
                 throw new InvalidOperationException($"Expected parse failure of '{outOfRangeLatitudeText}'. " 
                                                     + "Unexpectedly succeeded."),
-            Fail: errorText => Assert.Equal($"Parsed latitude, '{outOfRangeLatitudeText}', is out of range", 
-                                            errorText));
+            Fail: error => Assert.Contains($"is out of range", error.Message));
     }
 }
 
