@@ -12,29 +12,27 @@ public class CoordinateParserTests
     public void SmokeTest() => Assert.Equal(4, 2 + 2);
     
     [Theory]
-    [InlineData("62.1")] // The letter 'O' not the digit zero '0'
+    [InlineData("62.1")]
     [InlineData("-135.52")]
-    public void NumericLatitudeText_ParseDecimal_ReportsError(string numericText)
+    public void NumericText_ParseDecimal_ReportsSuccess(string numericText)
     {
         var parseDecimalResult = DecimalParser.ParseDecimal(numericText);
 
-        var expectedDecimal = decimal.Parse(numericText);
+        var expectedDecimal = decimal.Parse(numericText, CultureInfo.InvariantCulture);
         parseDecimalResult.Match(
-            Succ: _ => Assert.Equal(expectedDecimal, parseDecimalResult),
-            Fail: error => Assert.Equal($"Failed to parse decimal: '{numericText}'", error.Message));
+            Succ: parsedDecimal => Assert.Equal(expectedDecimal, parsedDecimal),
+            Fail: error => Assert.Fail($"Unexpected failure: '{error.Message}'"));
     }
     
     [Theory]
     [InlineData("75.3O")] // The letter 'O' not the digit zero '0'
     [InlineData("-83.4f")]
-    public void NonNumericLatitudeText_ParseDecimal_ReportsError(string nonNumericText)
+    public void NonNumericText_ParseDecimal_ReportsError(string nonNumericText)
     {
         var parseDecimalResult = DecimalParser.ParseDecimal(nonNumericText);
         
         parseDecimalResult.Match(
-            Succ: _ => 
-                throw new InvalidOperationException($"Expected parse failure of '{nonNumericText}'. " 
-                                                    + "Unexpectedly succeeded."),
+            Succ: _ => Assert.Fail($"Expected parse failure of '{nonNumericText}'. Unexpectedly succeeded."),
             Fail: error => Assert.Equal($"Failed to parse decimal: '{nonNumericText}'", error.Message));
     }
 
@@ -131,7 +129,7 @@ public static class DecimalParser
         decimal.TryParse(candidateText,
                          NumberStyles.Float,
                          CultureInfo.InvariantCulture,
-                         out var candidateLatitude)
-            ? FinSucc(candidateLatitude)
+                         out var value)
+            ? FinSucc(value)
             : FinFail<decimal>(Error.New($"Failed to parse decimal: '{candidateText}'"));
 }
