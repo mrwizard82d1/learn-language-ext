@@ -17,32 +17,31 @@ public class CoordinateParserTests
     [InlineData("90.0")]
     public void ValidLatitudeText_ParseLatitude_SuccessfullyParsed(string latitudeText)
     {
-        var actualLatitude = CoordinateParser.ParseLat(latitudeText);
-       
-        LangExtAssert.Equal(
-            FinSucc(decimal.Parse(latitudeText, NumberStyles.Float, CultureInfo.InvariantCulture)), 
-            actualLatitude);
+        var actualLatitude = CoordinateParser.ParseLatitude(latitudeText).ThrowIfFail();
+        
+        LangExtAssert.Equal(decimal.Parse(latitudeText, NumberStyles.Float, CultureInfo.InvariantCulture), 
+                            actualLatitude.Degrees);
     }
 
     [Fact]
-    public void NonNumericLatitudeText_ParseLatitude_ReportsError()
+    public void NonNumericLatitudeText_ParseDecimal_ReportsError()
     {
         // The letter 'O' not the digit zero '0'
-        const string nonNumericLatitudeText = "75.3O";
-        var nonNumericLatitude = CoordinateParser.ParseLat(nonNumericLatitudeText);
+        const string nonNumericDecimalText = "75.3O";
+        var nonNumericDecimal = CoordinateParser.ParseDecimal(nonNumericDecimalText);
         
-        nonNumericLatitude.Match(
+        nonNumericDecimal.Match(
             Succ: _ => 
-                throw new InvalidOperationException($"Expected parse failure of '{nonNumericLatitudeText}'. " 
+                throw new InvalidOperationException($"Expected parse failure of '{nonNumericDecimalText}'. " 
                                                     + "Unexpectedly succeeded."),
-            Fail: errorText => Assert.Equal($"Failed to parse latitude: '{nonNumericLatitudeText}'", errorText));
+            Fail: errorText => Assert.Equal($"Failed to parse decimal: '{nonNumericDecimalText}'", errorText));
     }
 
     [Fact]
     public void LatitudeOutOfRange_ParseLatitude_ReportsError()
     {
         const string outOfRangeLatitudeText = "90.00001";
-        var outOfRangeLatitudeResult = CoordinateParser.GetLatitude(outOfRangeLatitudeText);
+        var outOfRangeLatitudeResult = CoordinateParser.ParseLatitude(outOfRangeLatitudeText);
         
         outOfRangeLatitudeResult.Match(
             Succ: _ => 
@@ -55,16 +54,17 @@ public class CoordinateParserTests
 
 public static class CoordinateParser
 {
-    public static Fin<Latitude> GetLatitude(string latitudeText) =>
-        ParseLat(latitudeText).Bind(Latitude.Create);
+    public static Fin<Latitude> ParseLatitude(string latitudeText) =>
+        ParseDecimal(latitudeText)
+            .Bind(Latitude.Create);
     
-    public static Fin<decimal> ParseLat(string latitudeText) =>
-        decimal.TryParse(latitudeText,
+    public static Fin<decimal> ParseDecimal(string candidateText) =>
+        decimal.TryParse(candidateText,
                          NumberStyles.Float,
                          CultureInfo.InvariantCulture,
                          out var candidateLatitude)
             ? FinSucc(candidateLatitude)
-            : FinFail<decimal>(Error.New($"Failed to parse latitude: '{latitudeText}'"));
+            : FinFail<decimal>(Error.New($"Failed to parse decimal: '{candidateText}'"));
 }
 
 public readonly record struct Latitude
