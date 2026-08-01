@@ -12,20 +12,20 @@ public class CoordinateParserTests
     public void SmokeTest() => Assert.Equal(4, 2 + 2);
     
     [Theory]
-    [InlineData("45.9", "45.9")]
-    [InlineData("-90.0", "-90.0")]
-    [InlineData("90.0", "90.0")]
-    public void ValidLatitudeText_ParseCoordinate_SuccessfullyParsed(string latitudeText, string expectedLatitude)
+    [InlineData("45.9")]
+    [InlineData("-90.0")]
+    [InlineData("90.0")]
+    public void ValidLatitudeText_ParseLatitude_SuccessfullyParsed(string latitudeText)
     {
         var actualLatitude = CoordinateParser.ParseLat(latitudeText);
        
         LangExtAssert.Equal(
-            FinSucc(decimal.Parse(expectedLatitude, NumberStyles.Float, CultureInfo.InvariantCulture)), 
+            FinSucc(decimal.Parse(latitudeText, NumberStyles.Float, CultureInfo.InvariantCulture)), 
             actualLatitude);
     }
 }
 
-public record CoordinateParser(decimal Value)
+public static class CoordinateParser
 {
     public static Fin<decimal> ParseLat(string latitudeText) =>
         decimal.TryParse(latitudeText,
@@ -33,5 +33,5 @@ public record CoordinateParser(decimal Value)
                          CultureInfo.InvariantCulture,
                          out var candidateLatitude)
             ? FinSucc(candidateLatitude)
-            : FinFail<decimal>(Error.New($"Failed to parse coordinate {latitudeText}"));
+            : FinFail<decimal>(Error.New($"Failed to parse latitude: '{latitudeText}'"));
 }
