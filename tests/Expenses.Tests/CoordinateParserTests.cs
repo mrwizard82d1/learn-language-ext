@@ -89,7 +89,7 @@ public class CoordinateParserTests
     }
 }
 
-public static class CoordinateParser
+public static class GeoCoordinateParser
 {
 }
 
