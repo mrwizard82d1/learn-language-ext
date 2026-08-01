@@ -45,10 +45,8 @@ public class CoordinateParserTests
         var outOfRangeLatitudeResult = Latitude.ParseLatitude(outOfRangeLatitudeText);
         
         outOfRangeLatitudeResult.Match(
-            Succ: _ => 
-                throw new InvalidOperationException($"Expected parse failure of '{outOfRangeLatitudeText}'. " 
-                                                    + "Unexpectedly succeeded."),
-            Fail: error => Assert.Contains($"is out of range", error.Message));
+            Succ: _ => Assert.Fail($"Expected failure but successfully parsed {outOfRangeLatitudeText}"),
+            Fail: error => Assert.Contains("is out of range", error.Message));
     }
 }
 
