@@ -23,6 +23,20 @@ public class CoordinateParserTests
             FinSucc(decimal.Parse(latitudeText, NumberStyles.Float, CultureInfo.InvariantCulture)), 
             actualLatitude);
     }
+
+    [Fact]
+    public void NonNumericLatitudeText_ParseLatitude_ReportsError()
+    {
+        // The letter 'O' not the digit zero '0'
+        const string nonNumericLatitudeText = "75.3O";
+        var nonNumericLatitude = CoordinateParser.ParseLat(nonNumericLatitudeText);
+        
+        var result =  nonNumericLatitude.Match(
+            Succ: _ => 
+                throw new InvalidOperationException($"Expected parse failure of '{nonNumericLatitudeText}'. " 
+                                                    + "Unexpectedly succeeded."),
+            Fail: errorText => Assert.Equal($"Failed to parse latitude: '{nonNumericLatitudeText}'", errorText));
+    }
 }
 
 public static class CoordinateParser
