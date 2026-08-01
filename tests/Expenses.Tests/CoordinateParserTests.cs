@@ -17,10 +17,11 @@ public class CoordinateParserTests
     [InlineData("90.0")]
     public void ValidLatitudeText_ParseLatitude_SuccessfullyParsed(string latitudeText)
     {
-        var actualLatitude = Latitude.ParseLatitude(latitudeText).ThrowIfFail();
+        var actual = Latitude.ParseLatitude(latitudeText);
         
-        LangExtAssert.Equal(decimal.Parse(latitudeText, NumberStyles.Float, CultureInfo.InvariantCulture), 
-                            actualLatitude.Degrees);
+        var expected = decimal.Parse(latitudeText, NumberStyles.Float, CultureInfo.InvariantCulture);
+        actual.Match(Succ: latitude => LangExtAssert.Equal(expected, latitude.Degrees),
+            Fail: error => Assert.Fail(error.Message));
     }
 
     [Fact]
@@ -34,7 +35,7 @@ public class CoordinateParserTests
             Succ: _ => 
                 throw new InvalidOperationException($"Expected parse failure of '{nonNumericDecimalText}'. " 
                                                     + "Unexpectedly succeeded."),
-            Fail: errorText => Assert.Equal($"Failed to parse decimal: '{nonNumericDecimalText}'", errorText));
+            Fail: error => Assert.Equal($"Failed to parse decimal: '{nonNumericDecimalText}'", error));
     }
 
     [Fact]
@@ -64,7 +65,7 @@ public readonly record struct Latitude
 
     public static Fin<Latitude> ParseLatitude(string latitudeText) =>
         DecimalParser.ParseDecimal(latitudeText)
-            .Bind(Latitude.Create);
+            .Bind(Create);
 
     public static Fin<Latitude> Create(decimal degrees) =>
         degrees is >= -90.0m and <= 90.0m
