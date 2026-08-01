@@ -12,6 +12,33 @@ public class CoordinateParserTests
     public void SmokeTest() => Assert.Equal(4, 2 + 2);
     
     [Theory]
+    [InlineData("62.1")] // The letter 'O' not the digit zero '0'
+    [InlineData("-135.52")]
+    public void NumericLatitudeText_ParseDecimal_ReportsError(string numericText)
+    {
+        var parseDecimalResult = DecimalParser.ParseDecimal(numericText);
+
+        var expectedDecimal = decimal.Parse(numericText);
+        parseDecimalResult.Match(
+            Succ: _ => Assert.Equal(expectedDecimal, parseDecimalResult),
+            Fail: error => Assert.Equal($"Failed to parse decimal: '{numericText}'", error.Message));
+    }
+    
+    [Theory]
+    [InlineData("75.3O")] // The letter 'O' not the digit zero '0'
+    [InlineData("-83.4f")]
+    public void NonNumericLatitudeText_ParseDecimal_ReportsError(string nonNumericText)
+    {
+        var parseDecimalResult = DecimalParser.ParseDecimal(nonNumericText);
+        
+        parseDecimalResult.Match(
+            Succ: _ => 
+                throw new InvalidOperationException($"Expected parse failure of '{nonNumericText}'. " 
+                                                    + "Unexpectedly succeeded."),
+            Fail: error => Assert.Equal($"Failed to parse decimal: '{nonNumericText}'", error.Message));
+    }
+
+    [Theory]
     [InlineData("45.9")]
     [InlineData("-41.7")]
     [InlineData("-90.0")]
@@ -23,20 +50,6 @@ public class CoordinateParserTests
         var expected = decimal.Parse(latitudeText, NumberStyles.Float, CultureInfo.InvariantCulture);
         actual.Match(Succ: latitude => Assert.Equal(expected, latitude.Degrees),
                      Fail: error => Assert.Fail(error.Message));
-    }
-
-    [Fact]
-    public void NonNumericLatitudeText_ParseDecimal_ReportsError()
-    {
-        // The letter 'O' not the digit zero '0'
-        const string nonNumericDecimalText = "75.3O";
-        var nonNumericDecimal = DecimalParser.ParseDecimal(nonNumericDecimalText);
-        
-        nonNumericDecimal.Match(
-            Succ: _ => 
-                throw new InvalidOperationException($"Expected parse failure of '{nonNumericDecimalText}'. " 
-                                                    + "Unexpectedly succeeded."),
-            Fail: error => Assert.Equal($"Failed to parse decimal: '{nonNumericDecimalText}'", error.Message));
     }
 
     [Fact]
@@ -62,20 +75,6 @@ public class CoordinateParserTests
         var expected = decimal.Parse(longitudeText, NumberStyles.Float, CultureInfo.InvariantCulture);
         actual.Match(Succ: longitude => Assert.Equal(expected, longitude.Degrees),
                      Fail: error => Assert.Fail(error.Message));
-    }
-
-    [Fact]
-    public void NonNumericLongitudeText_ParseDecimal_ReportsError()
-    {
-        // The letter 'O' not the digit zero '0'
-        const string nonNumericDecimalText = "-83.4f";
-        var nonNumericDecimal = DecimalParser.ParseDecimal(nonNumericDecimalText);
-        
-        nonNumericDecimal.Match(
-            Succ: _ => 
-                throw new InvalidOperationException($"Expected parse failure of '{nonNumericDecimalText}'. " 
-                                                    + "Unexpectedly succeeded."),
-            Fail: error => Assert.Equal($"Failed to parse decimal: '{nonNumericDecimalText}'", error.Message));
     }
 
     [Fact]
