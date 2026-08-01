@@ -17,7 +17,7 @@ public class CoordinateParserTests
     [InlineData("90.0")]
     public void ValidLatitudeText_ParseLatitude_SuccessfullyParsed(string latitudeText)
     {
-        var actualLatitude = CoordinateParser.ParseLatitude(latitudeText).ThrowIfFail();
+        var actualLatitude = Latitude.ParseLatitude(latitudeText).ThrowIfFail();
         
         LangExtAssert.Equal(decimal.Parse(latitudeText, NumberStyles.Float, CultureInfo.InvariantCulture), 
                             actualLatitude.Degrees);
@@ -28,7 +28,7 @@ public class CoordinateParserTests
     {
         // The letter 'O' not the digit zero '0'
         const string nonNumericDecimalText = "75.3O";
-        var nonNumericDecimal = CoordinateParser.ParseDecimal(nonNumericDecimalText);
+        var nonNumericDecimal = DecimalParser.ParseDecimal(nonNumericDecimalText);
         
         nonNumericDecimal.Match(
             Succ: _ => 
@@ -41,7 +41,7 @@ public class CoordinateParserTests
     public void LatitudeOutOfRange_ParseLatitude_ReportsError()
     {
         const string outOfRangeLatitudeText = "90.00001";
-        var outOfRangeLatitudeResult = CoordinateParser.ParseLatitude(outOfRangeLatitudeText);
+        var outOfRangeLatitudeResult = Latitude.ParseLatitude(outOfRangeLatitudeText);
         
         outOfRangeLatitudeResult.Match(
             Succ: _ => 
@@ -54,17 +54,6 @@ public class CoordinateParserTests
 
 public static class CoordinateParser
 {
-    public static Fin<Latitude> ParseLatitude(string latitudeText) =>
-        ParseDecimal(latitudeText)
-            .Bind(Latitude.Create);
-    
-    public static Fin<decimal> ParseDecimal(string candidateText) =>
-        decimal.TryParse(candidateText,
-                         NumberStyles.Float,
-                         CultureInfo.InvariantCulture,
-                         out var candidateLatitude)
-            ? FinSucc(candidateLatitude)
-            : FinFail<decimal>(Error.New($"Failed to parse decimal: '{candidateText}'"));
 }
 
 public readonly record struct Latitude
@@ -73,8 +62,23 @@ public readonly record struct Latitude
 
     private Latitude(decimal degrees) => Degrees = degrees;
 
+    public static Fin<Latitude> ParseLatitude(string latitudeText) =>
+        DecimalParser.ParseDecimal(latitudeText)
+            .Bind(Latitude.Create);
+
     public static Fin<Latitude> Create(decimal degrees) =>
         degrees is >= -90.0m and <= 90.0m
             ? FinSucc(new Latitude(degrees))
             : FinFail<Latitude>(Error.New($"Parsed latitude, '{degrees}', is out of range"));
+}
+
+public static class DecimalParser
+{
+    public static Fin<decimal> ParseDecimal(string candidateText) =>
+        decimal.TryParse(candidateText,
+                         NumberStyles.Float,
+                         CultureInfo.InvariantCulture,
+                         out var candidateLatitude)
+            ? FinSucc(candidateLatitude)
+            : FinFail<decimal>(Error.New($"Failed to parse decimal: '{candidateText}'"));
 }
