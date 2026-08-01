@@ -17,9 +17,12 @@ public class CoordinateParserTests
     [InlineData("90.0", "90.0")]
     public void ValidLatitudeText_ParseCoordinate_SuccessfullyParsed(string latitudeText, string expectedLatitude)
     {
-        Fin<Coordinate> actualLatitude = Coordinate.ParseLat(latitudeText).ThrowIfFail();
+        var actualLatitude = Coordinate.ParseLat(latitudeText);
        
-        LangExtAssert.Equal(FinSucc(new Coordinate(decimal.Parse(expectedLatitude))), actualLatitude);
+        LangExtAssert.Equal(
+            FinSucc(new Coordinate(decimal.Parse(expectedLatitude, 
+                                                 NumberStyles.Float, CultureInfo.InvariantCulture))), 
+            actualLatitude);
     }
 }
 
@@ -33,7 +36,7 @@ public record Coordinate(decimal Value)
                                NumberStyles.Float,
                                CultureInfo.InvariantCulture,
                                out var candidateLatitude) 
-                   ? FinSucc<Coordinate>(new Coordinate(candidateLatitude)) 
-                   : FinFail<Coordinate>(Error.New($"Failed to coordinate {latitudeText}"));
+                   ? FinSucc(new Coordinate(candidateLatitude)) 
+                   : FinFail<Coordinate>(Error.New($"Failed to parse hcoordinate {latitudeText}"));
     }
 }
