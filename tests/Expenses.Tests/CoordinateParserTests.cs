@@ -1,7 +1,39 @@
+using System.Globalization;
+
+using LanguageExt;
+using LanguageExt.Common;
+using static LanguageExt.Prelude;
+
 namespace Expenses.Tests;
 
 public class CoordinateParserTests
 {
     [Fact]
     public void SmokeTest() => Assert.Equal(4, 2 + 2);
+    
+    [Theory]
+    [InlineData("45.9", "45.9")]
+    [InlineData("-90.0", "-90.0")]
+    [InlineData("90.0", "90.0")]
+    public void ValidLatitudeText_ParseCoordinate_SuccessfullyParsed(string latitudeText, string expectedLatitude)
+    {
+        Fin<Coordinate> actualLatitude = Coordinate.ParseLat(latitudeText).ThrowIfFail();
+       
+        LangExtAssert.Equal(FinSucc(new Coordinate(decimal.Parse(expectedLatitude))), actualLatitude);
+    }
+}
+
+public record Coordinate(decimal Value)
+{
+    public static Coordinate Latitude(decimal value) => new (value);
+    
+    public static Fin<Coordinate> ParseLat(string latitudeText)
+    {
+        return decimal.TryParse(latitudeText,
+                               NumberStyles.Float,
+                               CultureInfo.InvariantCulture,
+                               out var candidateLatitude) 
+                   ? FinSucc<Coordinate>(new Coordinate(candidateLatitude)) 
+                   : FinFail<Coordinate>(Error.New($"Failed to coordinate {latitudeText}"));
+    }
 }
