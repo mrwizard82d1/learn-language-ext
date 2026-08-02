@@ -1,7 +1,6 @@
 using System.Globalization;
 
 using LanguageExt;
-using LanguageExt.ClassInstances.Pred;
 using LanguageExt.Common;
 using static LanguageExt.Prelude;
 
@@ -89,6 +88,9 @@ public class CoordinateParserTests
 
     [Theory]
     [InlineData("26.4", "75.2", ",")]
+    [InlineData("32.6", "-152.6", ", ")]
+    [InlineData("\t-29.1", "61.6", ", ")]
+    [InlineData("43.9", "61.6\n", ",")]
     public void ValidLatitudeAndLongitude_ParseCoordinate_ReportSuccess(string latitudeText, 
                                                                         string longitudeText, 
                                                                         string separatorText)
@@ -109,16 +111,70 @@ public class CoordinateParserTests
             }, 
             Fail: error => Assert.Fail(error.Message));
     }
+
+    [Theory]
+    [InlineData("66.98e", "-76.9", ",")]
+    [InlineData("76.2", "119.7s", ",")]
+    public void InvalidLatitudeOrLongitude_ParseCoordinate_ReportFailure(string latitudeText, 
+                                                                        string longitudeText, 
+                                                                        string separatorText)
+    {
+        var latitudeAndLongitudeText = latitudeText + separatorText + longitudeText;
+        var actualGeoCoordinate = GeoCoordinateParser.ParseCoordinate(latitudeAndLongitudeText);
+
+        actualGeoCoordinate.Match(
+            Succ: _ => Assert.Fail($"Unexpected success for '{latitudeAndLongitudeText}'"),
+            Fail: error => Assert.Contains("Failed to parse decimal", error.Message));
+    }
+
+    [Fact]
+    public void TooLargeCoordinateCount_ParseCoordinate_ReportFailure()
+    {
+        const string tooManyLatitudeAndLongitudeText = "81.3,-39.0,-12.5";
+        var actualGeoCoordinate = 
+            GeoCoordinateParser.ParseCoordinate(tooManyLatitudeAndLongitudeText);
+
+        actualGeoCoordinate.Match(
+            Succ: _ => Assert.Fail($"Unexpected success for '{tooManyLatitudeAndLongitudeText}'"),
+            Fail: error => Assert.Contains("Expected 'lat,lng' but got", error.Message));
+    }
+
+    [Fact]
+    public void TooFewCoordinateCount_ParseCoordinate_ReportFailure()
+    {
+        const string tooManyLatitudeAndLongitudeText = "-66.5";
+        var actualGeoCoordinate = 
+            GeoCoordinateParser.ParseCoordinate(tooManyLatitudeAndLongitudeText);
+
+        actualGeoCoordinate.Match(
+            Succ: _ => Assert.Fail($"Unexpected success for '{tooManyLatitudeAndLongitudeText}'"),
+            Fail: error => Assert.Contains("Expected 'lat,lng' but got", error.Message));
+    }
+
+    [Fact]
+    public void BothCoordinateInvalid_ParseCoordinate_ReportLatitudeFailure()
+    {
+        // Both capital 'O's instead of zeros
+        const string bothCoordinatesInvalid = "7O.6,-145.O";
+        var actualGeoCoordinate = 
+            GeoCoordinateParser.ParseCoordinate(bothCoordinatesInvalid);
+
+        actualGeoCoordinate.Match(
+            Succ: _ => Assert.Fail($"Unexpected success for '{bothCoordinatesInvalid}'"),
+            Fail: error => Assert.Contains("Failed to parse decimal", error.Message));
+    }
 }
 
 public readonly record struct GeoCoordinate(Latitude Latitude, Longitude Longitude);
 
 public static class GeoCoordinateParser
 {
-    public static Fin<GeoCoordinate> ParseCoordinate(string latitudeAndLongitudeText)
-    {
-        return FinFail<GeoCoordinate>(Error.New("Quux"));
-    }
+    public static Fin<GeoCoordinate> ParseCoordinate(string latitudeAndLongitudeText) =>
+        latitudeAndLongitudeText.Split(',', StringSplitOptions.TrimEntries) is [var latitudeText, var longitudeText]
+            ? Latitude.ParseLatitude(latitudeText)
+                      .Bind(lat => Longitude.ParseLongitude(longitudeText)
+                                            .Map(lng => new GeoCoordinate(lat, lng)))
+            : FinFail<GeoCoordinate>(Error.New($"Expected 'lat,lng' but got: '{latitudeAndLongitudeText}'"));
 }
 
 public readonly record struct Latitude
