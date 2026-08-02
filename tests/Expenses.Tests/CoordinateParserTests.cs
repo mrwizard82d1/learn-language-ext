@@ -1,6 +1,7 @@
 using System.Globalization;
 
 using LanguageExt;
+using LanguageExt.ClassInstances.Pred;
 using LanguageExt.Common;
 using static LanguageExt.Prelude;
 
@@ -85,10 +86,39 @@ public class CoordinateParserTests
             Succ: _ => Assert.Fail($"Expected failure but successfully parsed {outOfRangeLongitudeText}"),
             Fail: error => Assert.Contains("is out of range", error.Message));
     }
+
+    [Theory]
+    [InlineData("26.4", "75.2", ",")]
+    public void ValidLatitudeAndLongitude_ParseCoordinate_ReportSuccess(string latitudeText, 
+                                                                        string longitudeText, 
+                                                                        string separatorText)
+    {
+        var latitudeAndLongitudeText = latitudeText + separatorText + longitudeText;
+        var actualGeoCoordinate = GeoCoordinateParser.ParseCoordinate(latitudeAndLongitudeText);
+        
+        var expectedLatitudeValue = decimal.Parse(latitudeText, 
+                                                  NumberStyles.Float, CultureInfo.InvariantCulture);
+        var expectedLongitudeValue = decimal.Parse(longitudeText, 
+                                                   NumberStyles.Float, CultureInfo.InvariantCulture);
+
+        actualGeoCoordinate.Match(
+            Succ: geoCoordinate =>
+            {
+                Assert.Equal(expectedLatitudeValue, geoCoordinate.Latitude.Degrees);
+                Assert.Equal(expectedLongitudeValue, geoCoordinate.Longitude.Degrees);
+            }, 
+            Fail: error => Assert.Fail(error.Message));
+    }
 }
+
+public readonly record struct GeoCoordinate(Latitude Latitude, Longitude Longitude);
 
 public static class GeoCoordinateParser
 {
+    public static Fin<GeoCoordinate> ParseCoordinate(string latitudeAndLongitudeText)
+    {
+        return FinFail<GeoCoordinate>(Error.New("Quux"));
+    }
 }
 
 public readonly record struct Latitude
