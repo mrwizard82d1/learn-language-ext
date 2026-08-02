@@ -142,12 +142,12 @@ public class CoordinateParserTests
     [Fact]
     public void TooFewCoordinateCount_ParseCoordinate_ReportFailure()
     {
-        const string tooManyLatitudeAndLongitudeText = "-66.5";
+        const string tooFewLatitudeAndLongitudeText = "-66.5";
         var actualGeoCoordinate = 
-            GeoCoordinateParser.ParseCoordinate(tooManyLatitudeAndLongitudeText);
+            GeoCoordinateParser.ParseCoordinate(tooFewLatitudeAndLongitudeText);
 
         actualGeoCoordinate.Match(
-            Succ: _ => Assert.Fail($"Unexpected success for '{tooManyLatitudeAndLongitudeText}'"),
+            Succ: _ => Assert.Fail($"Unexpected success for '{tooFewLatitudeAndLongitudeText}'"),
             Fail: error => Assert.Contains("Expected 'lat,lng' but got", error.Message));
     }
 
@@ -161,7 +161,11 @@ public class CoordinateParserTests
 
         actualGeoCoordinate.Match(
             Succ: _ => Assert.Fail($"Unexpected success for '{bothCoordinatesInvalid}'"),
-            Fail: error => Assert.Contains("Failed to parse decimal", error.Message));
+            Fail: error =>
+            {
+                Assert.Contains("7O.6", error.Message); // The error in Latitude
+                Assert.DoesNotContain("-145.O", error.Message); // The error in Longitude that is **never** executed
+            });
     }
 }
 
