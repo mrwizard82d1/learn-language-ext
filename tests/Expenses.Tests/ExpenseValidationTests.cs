@@ -23,4 +23,12 @@ public class ExpenseValidationTests
         
         LangExtAssert.Equal(Success<string, decimal>(12.50m), result);
     }
+
+    [Fact]
+    public void ValidateAmount_NonPositive_ReturnsFail()
+    {
+        var result = ExpenseValidation.ValidateAmount(-1m);
+        
+        Assert.True(result.IsFail);
+    }
 }
