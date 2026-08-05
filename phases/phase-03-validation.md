@@ -54,7 +54,7 @@ You just felt the short-circuit in your bones (the kata). Phase 3 is its mirror 
 
 ## Candidate test list
 
-- [ ] `ValidateAmount`: positive → `Success`; non-positive → `Fail`
+- [x] `ValidateAmount`: positive → `Success`; non-positive → `Fail`
 - [ ] `ValidateCategory`: non-empty → `Success`; empty/whitespace → `Fail`
 - [ ] **Accumulate:** amount *and* category both invalid → `Fail` with **both** messages
 - [ ] one invalid → `Fail` with just that one
@@ -67,7 +67,7 @@ You just felt the short-circuit in your bones (the kata). Phase 3 is its mirror 
 
 ## Steps
 
-### Step 1 — Red → Green: `ValidateAmount`  `[ ]`
+### Step 1 — Red → Green: `ValidateAmount`  `[x]`
 
 Create `tests/Expenses.Tests/ExpenseValidationTests.cs`. Inline a validator with a deliberately-wrong stub (assertion red, not compile error):
 
