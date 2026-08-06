@@ -54,10 +54,9 @@ public class ExpenseValidationTests
         var result = ExpenseValidation.ValidateCategory(erroneousCategory);
         
         Assert.True(result.IsFail);
-        var actualErrors = result.Match(
-            Succ: _ => Seq<string>(), // necessary to get everything to compile; should actually never get here
-            Fail: errors => errors
+        result.Match(
+            Succ: v => Assert.Fail($"Expected failure but got: {v}"),
+            Fail: errors => Assert.Equal("Category is required", errors.Single())
             );
-        Assert.Equal("Category is required", actualErrors.Single());
     }
 }

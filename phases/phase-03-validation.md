@@ -55,7 +55,7 @@ You just felt the short-circuit in your bones (the kata). Phase 3 is its mirror 
 ## Candidate test list
 
 - [x] `ValidateAmount`: positive → `Success`; non-positive → `Fail`
-- [ ] `ValidateCategory`: non-empty → `Success`; empty/whitespace → `Fail`
+- [x] `ValidateCategory`: non-empty → `Success`; empty/whitespace → `Fail`
 - [ ] **Accumulate:** amount *and* category both invalid → `Fail` with **both** messages
 - [ ] one invalid → `Fail` with just that one
 - [ ] all valid → `Success(entry)`
@@ -105,7 +105,7 @@ public static Validation<string, decimal> ValidateAmount(decimal amount) =>
 ```
 Note the explicit `<string, decimal>` type args on `Success`/`Fail` — there's no left/right value present for inference, so you supply both (same reason `Right<string, decimal>(…)` needed them in Phase 2).
 
-### Step 2 — Triangulate + a second rule: `ValidateCategory`  `[ ]`
+### Step 2 — Triangulate + a second rule: `ValidateCategory`  `[x]`
 
 ```csharp
 [Fact]
