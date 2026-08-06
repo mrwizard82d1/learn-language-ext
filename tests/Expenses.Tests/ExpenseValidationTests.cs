@@ -1,9 +1,9 @@
-using LanguageExt.Common;
-
 namespace Expenses.Tests;
 
 using LanguageExt;
 using static LanguageExt.Prelude;
+
+public sealed record ValidatedEntry(decimal Amount, string Category);
 
 public static class ExpenseValidation
 {
@@ -16,6 +16,10 @@ public static class ExpenseValidation
         !string.IsNullOrWhiteSpace(category)
             ? Success<string, string>(category)
             : Fail<string, string>("Category is required");
+
+    public static Validation<string, ValidatedEntry> Validate(decimal amount, string category) =>
+        (ValidateAmount(amount), ValidateCategory(category))
+        .Apply((a, c) => new ValidatedEntry(a, c));
 }
 public class ExpenseValidationTests
 {
@@ -58,5 +62,20 @@ public class ExpenseValidationTests
             Succ: v => Assert.Fail($"Expected failure but got: {v}"),
             Fail: errors => Assert.Equal("Category is required", errors.Single())
             );
+    }
+
+    [Fact]
+    public void Validate_AllFieldsInvalid_AccumulatesAllErrors()
+    {
+        var result = ExpenseValidation.Validate(-5m, "\t\n");
+
+        result.Match(
+            Succ: v => Assert.Fail($"Expected failure but got: {v}"),
+            Fail: errors =>
+            {
+                Assert.Equal(2, errors.Count);
+                Assert.Contains("Amount must be positive", errors);
+                Assert.Contains("Category is required", errors);
+            });
     }
 }
