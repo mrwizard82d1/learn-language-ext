@@ -78,4 +78,33 @@ public class ExpenseValidationTests
                 Assert.Contains("Category is required", errors);
             });
     }
+
+    [Fact]
+    public void Validate_AllValid_ReturnsSuccessEntry()
+    {
+        var result = ExpenseValidation.Validate(9.99m, "Groceries");
+
+        LangExtAssert.Equal(Success<string, ValidatedEntry>(new ValidatedEntry(9.99m, "Groceries")), 
+                            result);
+    }
+
+    [Fact]
+    public void Validate_OneFieldInvalid_FailWithThatSingleError()
+    {
+        // Only category bad
+        var result = ExpenseValidation.Validate(9.99m, "");
+
+        result.Match(Succ: e => Assert.Fail($"Expected failure, got: {e}"),
+                     Fail: errors => Assert.Equal("Category is required", errors.Single()));
+    }
+
+    [Fact]
+    public void Validate_OtherFieldInvalid_FailWithThatSingleError()
+    {
+        // Only category bad
+        var result = ExpenseValidation.Validate(-9.99m, "Groceries");
+
+        result.Match(Succ: e => Assert.Fail($"Expected failure, got: {e}"),
+                     Fail: errors => Assert.Equal("Amount must be positive", errors.Single()));
+    }
 }

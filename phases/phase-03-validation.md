@@ -57,8 +57,8 @@ You just felt the short-circuit in your bones (the kata). Phase 3 is its mirror 
 - [x] `ValidateAmount`: positive → `Success`; non-positive → `Fail`
 - [x] `ValidateCategory`: non-empty → `Success`; empty/whitespace → `Fail`
 - [x] **Accumulate:** amount *and* category both invalid → `Fail` with **both** messages
-- [ ] one invalid → `Fail` with just that one
-- [ ] all valid → `Success(entry)`
+- [x] one invalid → `Fail` with just that one
+- [x] all valid → `Success(entry)`
 - [ ] `Match` consumes `Succ` / `Fail(Seq<F>)`
 - [ ] **Contrast:** the same rules via `Bind` report only the *first* error (proves short-circuit vs accumulate)
 - [ ] *(stretch)* a third field; a domain error type instead of `string`; `.ToEither()`
@@ -149,7 +149,7 @@ public void Validate_AllFieldsInvalid_AccumulatesAllErrors()
 ```
 This is the payoff: unlike `Bind`, `Apply` ran **both** checks and gathered **both** failures. (`(v1, v2).Apply((a, b) => …)` is the tuple applicative — for more fields, extend the tuple: `(v1, v2, v3).Apply((a, b, c) => …)`.)
 
-### Step 4 — The success and one-error paths  `[ ]`
+### Step 4 — The success and one-error paths  `[x]`
 
 ```csharp
 [Fact]
