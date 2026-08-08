@@ -220,6 +220,26 @@ Green ⇒ promote. Move `ValidatedEntry` and `ExpenseValidation` into `src/Expen
 
 ---
 
+## Application challenge (optional) — Password-policy validator
+
+*Fresh domain, practice not a test — exercises `Validation` accumulation with **3+ independent rules** (so the tuple `Apply` extends past two).*
+
+**Goal:** `ValidatePassword(string) → Validation<string, Password>` that reports **every** policy violation at once.
+
+**Independent rules** (≥ 3 so you hit `(v1, v2, v3, v4).Apply(...)`):
+- length ≥ 8
+- contains a digit
+- contains an uppercase letter
+- contains a symbol (non-alphanumeric)
+
+**Tests:** all rules pass → `Success`; multiple rules fail → `Fail` with **all** violations (`Count == k` — the accumulate proof); one fails → just that one.
+
+**The wrinkle (the real transfer):** unlike expense `Validate` (each rule validated a *different field*), here **every rule checks the *same* string.** So decide: what does each rule's `Success` carry, and what does the combiner build? (Options: each rule returns the password and the combiner uses one; or rules return `Validation<string, Unit>` predicates and a `Password` smart-constructor — echoing your `Latitude` — builds the result at the end.)
+
+**Hints:** `char.IsDigit` / `char.IsUpper` / `char.IsLetterOrDigit` + LINQ `.Any(...)`; `string` errors like the phase; both-branches `Match` + `Count`/`Single` for assertions. Less guided — drive it; ask on demand.
+
+---
+
 ## Notes & questions
 
 _Fill in as you go._
