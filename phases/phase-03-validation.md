@@ -59,7 +59,7 @@ You just felt the short-circuit in your bones (the kata). Phase 3 is its mirror 
 - [x] **Accumulate:** amount *and* category both invalid → `Fail` with **both** messages
 - [x] one invalid → `Fail` with just that one
 - [x] all valid → `Success(entry)`
-- [ ] `Match` consumes `Succ` / `Fail(Seq<F>)`
+- [x] `Match` consumes `Succ` / `Fail(Seq<F>)`
 - [ ] **Contrast:** the same rules via `Bind` report only the *first* error (proves short-circuit vs accumulate)
 - [ ] *(stretch)* a third field; a domain error type instead of `string`; `.ToEither()`
 
@@ -168,7 +168,7 @@ public void Validate_OneFieldInvalid_FailsWithJustThatError()
 }
 ```
 
-### Step 5 — Consume: `Match` on `Succ` / `Fail(Seq<F>)`  `[ ]`
+### Step 5 — Consume: `Match` on `Succ` / `Fail(Seq<F>)`  `[x]`
 
 ```csharp
 [Fact]

@@ -108,4 +108,19 @@ public class ExpenseValidationTests
         result.Match(Succ: e => Assert.Fail($"Expected failure, got: {e}"),
                      Fail: errors => Assert.Equal("Amount must be positive", errors.Single()));
     }
+
+    [Fact]
+    public void Match_RendersSuccessOrAllErrors()
+    {
+        var ok = ExpenseValidation.Validate(1m, "Food")
+                                  .Match(Succ: e => $"OK: {e.Category}",
+                                         Fail: errors => string.Join("; ", errors));
+        
+        var bad = ExpenseValidation.Validate(-1m, "")
+                                   .Match(Succ:  e => $"OK: {e.Category}",
+                                       Fail: errors => string.Join("; ", errors));
+        
+        Assert.Equal("OK: Food", ok);
+        Assert.Equal("Amount must be positive; Category is required", bad);
+    }
 }
