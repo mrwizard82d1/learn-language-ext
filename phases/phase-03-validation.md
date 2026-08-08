@@ -288,4 +288,31 @@ _Fill in as you go._
 - **Implementation-ease is a tiebreaker, not a driver.** `Bind` pipelines *are* simpler to write, but don't let "Bind is easier" veto a genuine all-errors requirement (same trap as "exceptions are easier than `Either`" — easy ≠ right).
 - **Decision procedure (three questions, in order):** (1) Are the checks independent? *No →* short-circuit, done. (2) Does the consumer benefit from all failures at once? *No →* short-circuit anyway (simpler). (3) Both yes → **accumulate** (`Apply`/`and!`).
 
+### ⚠️ GOTCHA — `Tuple(single).Apply(...)` silently always "succeeds" (hit 2026-08-08)
+
+**Symptom:** a validator that should reject bad input *accepts* it — a "should-Fail" test fails with the `Succ`-branch message ("…unexpectedly passed"). The `Validation` seems to ignore its `Fail`.
+
+**Buggy code** (single rule wrapped in a 1-tuple):
+```csharp
+Tuple(ValidatePasswordLength(pwd))
+    .Apply(_ => new ValidatedPassword(pwd));   // ← always Success, even when the rule Fails
+```
+
+**Root cause (verified in a scratch project, LanguageExt 4.4.9):** there is **no single-element tuple applicative.** So `.Apply` on a 1-tuple does **not** invoke the `Validation` applicative — it falls through to a **generic "apply this function to this value"** extension (essentially `f(x)`, a pipe). Probe results:
+```
+Tuple(fail).Apply(_ => "made-it")  ->  runtime type = System.String   // NOT a Validation!  value = "made-it"
+(fail, succ).Apply((_,_) => "…")   ->  Fail([boom])                    // 2-tuple = real applicative, threads Fail
+fail.Map(_ => "…")                 ->  Fail([boom])                    // Map on one = correct
+```
+So `Tuple(single).Apply(f)` returns a **plain value** (the `Validation`/`Fail` is never looked at), and then LanguageExt's **implicit `A → Success` conversion** silently wraps that plain value in `Success`. Two traps compounding: wrong overload + implicit success-wrapping.
+
+**The rule:**
+- **One** validation → use **`.Map`** (`v.Map(_ => …)`; passes `Fail` through).
+- **Two or more** → the tuple applicative **`(v1, v2, …).Apply((a, b, …) => …)`** (threads/accumulates `Fail`).
+- **Never** `Tuple(single).Apply(...)`.
+
+**Fast diagnosis next time:** if `.Apply` seems to "lose" the failure, check the **runtime type of the result** — if it's a plain value (`string`/`ValidatedPassword`) instead of a `Validation<…>`, you bound to the wrong overload. And stay a little wary of the implicit `A → Success` conversion — it's convenient but it *masks* exactly this mistake (a plain value quietly becomes `Success` with no error).
+
+**Deeper lesson — "two wrongs make a right" (a silent one):** neither ingredient is a bug on its own — the generic "apply function to value" extension is useful, and the implicit `A → Success` conversion is a convenience. But *composed*, they let a `Fail`-carrying `Validation` be bypassed and re-wrapped as `Success` with **no compile error and no exception** — the worst failure mode (type-checks clean, runs happily; only a *behavioral* test catches it). The sharpest framing: **the implicit conversion turned what would have been a compile-time catch into a silent logic bug.** Without `A → Success`, `Tuple(single).Apply(...)` returning a plain `ValidatedPassword` would *not* satisfy the `Validation<string, ValidatedPassword>` return type → **compile error, caught instantly**. The implicit "helpfully" bridged that gap. General principle: **implicit conversions + ultra-general combinators trade type-safety for convenience** — usually convenience wins and you never notice; occasionally the erased distinction is exactly the one that would have caught the mistake. (Same power-vs-safety tension, specific costume.)
+
 -
