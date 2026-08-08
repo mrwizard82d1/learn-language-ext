@@ -204,7 +204,7 @@ public void Bind_ShortCircuits_ReportingOnlyTheFirstError()
 ```
 Same inputs as Step 3 (both fields invalid), but `Bind` reports **one** error where `Apply` reported **two**. That difference is the monad-vs-applicative distinction made concrete: `Bind`'s second step *depends on* the first's success, so a failed amount means the category check never runs.
 
-### Step 7 — Refactor: extract to production  `[ ]`
+### Step 7 — Refactor: extract to production  `[x]`
 
 Green ⇒ promote. Move `ValidatedEntry` and `ExpenseValidation` into `src/Expenses` (namespace `Expenses`, `using LanguageExt; using static LanguageExt.Prelude;`). Delete the inline copies; add `using Expenses;`. Re-run the full suite (smoke + Phase 1/2 + kata all still green).
 
