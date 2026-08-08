@@ -57,7 +57,8 @@ public class ExpenseValidationTests
     {
         var result = ExpenseValidation.ValidateCategory(erroneousCategory);
         
-        Assert.True(result.IsFail);
+        // No longer necessary ("duplicated" by `result.Match()`  below)
+        // Assert.True(result.IsFail);
         result.Match(
             Succ: v => Assert.Fail($"Expected failure but got: {v}"),
             Fail: errors => Assert.Equal("Category is required", errors.Single())
