@@ -265,4 +265,27 @@ _Fill in as you go._
 4. `.Apply(f)` (extension method) destructures ("unsplats") the tuple's two `Validation`s and combines them.
 5. **All `Success`** → invoke `f` with the unwrapped values → `Success(result)`. **Any `Fail`** → `f` is *not* invoked; the errors from *every* failing argument are **merged** onto the failure track (two fails → two errors — "passed through unchanged" is just the one-failure special case of this merge).
 
+### `Bind` vs `Apply` — refinement vs independent checks (a design tension worth living with)
+
+**Larry's think-aloud (verbatim, condensed):**
+
+> If the user model is "refinement", then the `Bind` approach makes sense … One is transforming data step by step into something else. However, if the "checks" are independent (still working on this concept of "independence"), `Apply()` (and `let!`…`and!`) makes sense. And perhaps (sub-)domain influences the choice also. A person wants to know "all errors at once"; it is frustrating (but "understandable" to a developer) to only surface one failure at a time (like only reporting the first compiler error long ago). … I may need to live with "design tension" (oh, my brain so wants "one right answer").
+
+**Synthesis:**
+
+- **Refinement / transformation → `Bind` (pipeline).** The type-progression pipeline (`Unvalidated → LongEnough → … → Valid`) transforms data step by step; each step **consumes the previous step's result**. Short-circuits on first failure. (Wlaschin ROP / *Domain Modeling Made Functional*.)
+- **Independent checks → `Apply` (accumulate)** (C# tuple `.Apply`; F# `let! … and!`). No step needs another's output. All run; failures gather.
+- **Operational test for "independence"** (the concept Larry was still forming): *does step B need step A's **success value** to run?* Yes → dependent → `Bind`. If both take the same raw input and neither consumes the other's result → independent → `Apply`. (Password rules all take the raw string; none consumes another's output → independent → `Apply`.)
+- **Domain/UX is a legitimate *third* driver.** Even when you *could* short-circuit, the user's need — "show me everything wrong at once" — pushes toward accumulate. Analogy Larry drew: old compilers stopped at the first error (short-circuit); modern ones error-recover and report many (accumulate). Same tension, resolved by UX.
+- **Mature designs use *both*:** `Apply`/`and!` *within* a step of independent checks; `Bind`/pipeline *between* dependent stages (parse → validate → persist). DMMF does exactly this.
+- **The "ambiguous resolution":** there is **no single right answer** — the choice falls out of (1) dependency structure and (2) domain/UX. Living with that tension *is* the senior-engineering answer; it's judgment, not a rule. The one-liner to keep: **independent checks → accumulate (`Apply`/`and!`); dependent steps → short-circuit (`Bind`/pipeline).**
+
+**Refinement (Larry, 2026-08-08) — separate CAN from SHOULD (two gates):** the independence axis and the consumer axis are *different questions*, and keeping them apart resolves the tension:
+
+- **CAN you accumulate? → independence** (hard constraint on the data/computation). Dependent checks *physically can't* accumulate — the later check needs the earlier's result to even run — so who's consuming is irrelevant. Independence determines what's **possible**.
+- **SHOULD you accumulate? → the consumer** (soft preference on value). Only when accumulation is *possible* does the consumer decide whether it's *worth it*. Determines what's **desirable**.
+- Larry's consumer heuristic (human → all-errors; machine → step-by-step) is a good **proxy but not the real predictor** — he caught this himself. The sharper question: **does the consumer act on multiple failures at once?** Human-at-a-form → yes; fail-fast transform pipeline → no; a *batch import that logs every failure per record* → machine-driven yet **yes**. So "human/machine" correlates but doesn't determine; "acts on all failures at once" does.
+- **Implementation-ease is a tiebreaker, not a driver.** `Bind` pipelines *are* simpler to write, but don't let "Bind is easier" veto a genuine all-errors requirement (same trap as "exceptions are easier than `Either`" — easy ≠ right).
+- **Decision procedure (three questions, in order):** (1) Are the checks independent? *No →* short-circuit, done. (2) Does the consumer benefit from all failures at once? *No →* short-circuit anyway (simpler). (3) Both yes → **accumulate** (`Apply`/`and!`).
+
 -
