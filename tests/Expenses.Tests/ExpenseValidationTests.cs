@@ -123,4 +123,18 @@ public class ExpenseValidationTests
         Assert.Equal("OK: Food", ok);
         Assert.Equal("Amount must be positive; Category is required", bad);
     }
+
+    [Fact]
+    public void Bind_ShortCircuits_ReportingOnlyTheFirstError()
+    {
+        // Bind: the category check only runs if amount succeeded; consequently,
+        // a bad amount hides the bad category entirely.
+        var viaBind =
+            ExpenseValidation.ValidateAmount(-5m)
+                             .Bind(amt => ExpenseValidation.ValidateCategory("")
+                                                           .Map(category => new ValidatedEntry(amt, category)));
+
+        viaBind.Match(Succ: entry => Assert.Fail($"Expected failure, got: {entry}"),
+                      Fail: errors => Assert.Equal("Amount must be positive", errors.Single()));
+    }
 }

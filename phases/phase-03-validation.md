@@ -60,7 +60,7 @@ You just felt the short-circuit in your bones (the kata). Phase 3 is its mirror 
 - [x] one invalid → `Fail` with just that one
 - [x] all valid → `Success(entry)`
 - [x] `Match` consumes `Succ` / `Fail(Seq<F>)`
-- [ ] **Contrast:** the same rules via `Bind` report only the *first* error (proves short-circuit vs accumulate)
+- [x] **Contrast:** the same rules via `Bind` report only the *first* error (proves short-circuit vs accumulate)
 - [ ] *(stretch)* a third field; a domain error type instead of `string`; `.ToEither()`
 
 ---
@@ -185,7 +185,7 @@ public void Match_RendersSuccessOrAllErrors()
 ```
 The `Fail` branch hands you the whole `Seq<F>` — join it, count it, render it, whatever the caller needs.
 
-### Step 6 — Prove the contrast: `Bind` short-circuits  `[ ]`
+### Step 6 — Prove the contrast: `Bind` short-circuits  `[x]`
 
 This test *is* the lesson. Compose the same two rules with **`Bind`** instead of `Apply`, and watch only the first error survive:
 ```csharp
