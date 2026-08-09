@@ -87,18 +87,17 @@ public class PasswordValidationTests
     {
         const string candidatePassword = "aBcDef";
         var result = ValidatedPassword.Create(candidatePassword);
-        
+
         result.Match(
-            Succ: unexpectedlyPassingPassword => 
+            Succ: unexpectedlyPassingPassword =>
                 Assert.Fail($"Password, `{unexpectedlyPassingPassword}`, unexpectedly passed"),
             Fail: errors =>
-            {
                 Assert.Multiple(
                     () => Assert.Equal(2, errors.Count),
-                    () => Assert.Contains(errors,
-                                          e => e.Contains($"at least 8 characters")),
-                    () => Assert.Contains(errors,
-                                          e => (e.Contains($"at least 1 digit"))));
-            });
+                    // The following sequence of tests relies on errors
+                    // collected in the same order as the original sequence.
+                    () => Assert.Contains("at least 8 characters", errors[0]),
+                    () => Assert.Contains("at least 1 digit", errors[1])
+                    ));
     }
 }
