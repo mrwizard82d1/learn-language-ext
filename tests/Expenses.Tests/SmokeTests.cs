@@ -1,8 +1,5 @@
-using LanguageExt;
-
 namespace Expenses.Tests;
 
-using LanguageExt;
 using static LanguageExt.Prelude;
 
 public class SmokeTests
