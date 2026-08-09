@@ -315,4 +315,14 @@ So `Tuple(single).Apply(f)` returns a **plain value** (the `Validation`/`Fail` i
 
 **Deeper lesson — "two wrongs make a right" (a silent one):** neither ingredient is a bug on its own — the generic "apply function to value" extension is useful, and the implicit `A → Success` conversion is a convenience. But *composed*, they let a `Fail`-carrying `Validation` be bypassed and re-wrapped as `Success` with **no compile error and no exception** — the worst failure mode (type-checks clean, runs happily; only a *behavioral* test catches it). The sharpest framing: **the implicit conversion turned what would have been a compile-time catch into a silent logic bug.** Without `A → Success`, `Tuple(single).Apply(...)` returning a plain `ValidatedPassword` would *not* satisfy the `Validation<string, ValidatedPassword>` return type → **compile error, caught instantly**. The implicit "helpfully" bridged that gap. General principle: **implicit conversions + ultra-general combinators trade type-safety for convenience** — usually convenience wins and you never notice; occasionally the erased distinction is exactly the one that would have caught the mistake. (Same power-vs-safety tension, specific costume.)
 
+**Why did the *single* rule compile-and-lie, but *two* rules refuse to compile? (verified in scratch)** There are **two different `.Apply`s** in scope:
+- a **generic "pipe"** `Apply<A,B>(this A self, Func<A,B> f) => f(self)` — matches *any* receiver, but needs a **one-argument** function; it just runs `f(self)`.
+- the **applicative** on a **`ValueTuple`** of `Validation`s — needs a **matching multi-arg** function; this is the one that threads/accumulates `Fail`.
+
+Both `Tuple(...)` mistakes missed the applicative (a `Tuple<…>` isn't a `ValueTuple`). The difference was **lambda arity**:
+- **1 rule → `.Apply(_ => …)`** (one-arg lambda) → *matches the pipe* → `f(theWholeThing)` → plain value → implicit `Success` → **compiles, silently wrong.**
+- **2 rules → `.Apply((_, _) => …)`** (two-arg lambda) → the one-arg pipe can't accept it, and the applicative needs a `ValueTuple` receiver → **nothing matches → compile error, caught.**
+
+**Clarification — it's NOT specifically `Tuple(...)`; it's "one value + one-arg lambda" (however spelled):** `(x)` in C# is **not a tuple** — it's just `x` in parentheses (C# has no single-element tuple *literal*; probe: `(v1)` is type `Validation`). So `(v).Apply(_ => …)`, bare `v.Apply(_ => …)`, `Tuple(v).Apply(_ => …)`, even a forced `ValueTuple.Create(v).Apply(_ => …)` **all** funnel to the pipe and silently succeed. The applicative engages in **exactly one** configuration: a **2+-element `ValueTuple` literal `(a, b, …)`** *and* a **matching multi-arg lambda `(x, y, …)`**. Miss either half → pipe. (So the two-rule version was safe only because it satisfied *both* halves; and even it would have piped silently if given a one-arg lambda `t => …`.)
+
 -

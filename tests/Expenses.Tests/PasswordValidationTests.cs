@@ -12,25 +12,22 @@ public sealed record ValidatedPassword
 
     private const int MinimumPasswordLength = 8;
 
-    private static Validation<string, Unit> ValidatePasswordLength(string candidatePassword) =>
+    private static Validation<string, Unit> ValidateMinimumLength(string candidatePassword) =>
         candidatePassword.Length >= MinimumPasswordLength
             ? Success<string, Unit>(unit)
             : Fail<string, Unit>($"Password must be at least 8 characters long.");
+
+    private static Validation<string, Unit> ValidateHasDigits(string candidatePassword) =>
+        candidatePassword.Any(char.IsAsciiDigit)
+            ? Success<string, Unit>(unit)
+            : Fail<string, Unit>($"Password must contain at least 1 digit.");
     
     
     public static Validation<string, ValidatedPassword> Create(string candidatePassword) =>
-        // Although I expected the following code to "pass" by producing a
-        // failure for my "abc123" password (too short), it is actually a
-        // "two wrongs make a right" **anomaly**. (See the
-        // `phase-03-validation.md` `Notes`.) 
-        // Tuple(ValidatePasswordLength(candidatePassword))
-        //     .Apply((_) => new ValidatedPassword(candidatePassword));
-        ValidatePasswordLength(candidatePassword)
-            // Remember, `Map` respects "the two tracks". If
-            // `ValidatePasswordLength()` returns `Success`, it invokes the
-            // function passed to `Map`. If it returns `Fail`, it passes that
-            // failure through **unchanged**.
-            .Map(_ => new ValidatedPassword(candidatePassword));
+        // NOT Tuple(singleValue).Apply - silently always succeeds. See 
+        // notes for phase 3.
+        (ValidateMinimumLength(candidatePassword), ValidateHasDigits(candidatePassword))
+            .Apply((_, _) => new ValidatedPassword(candidatePassword));
 }
 public class PasswordValidationTests
 {
@@ -64,6 +61,24 @@ public class PasswordValidationTests
                     () => Assert.Equal(1, errors.Count),
                     () => Assert.Contains(errors,
                                           e => e.Contains($"at least 8 characters")));
+            });
+    }
+
+    [Fact]
+    public void ValidatedPassword_PasswordNoNumbers_ReturnsFail()
+    {
+        const string candidatePassword = "aBcDefghI";
+        var result = ValidatedPassword.Create(candidatePassword);
+        
+        result.Match(
+            Succ: unexpectedlyPassingPassword => 
+                Assert.Fail($"Password, `{unexpectedlyPassingPassword}`, unexpectedly passed"),
+            Fail: errors =>
+            {
+                Assert.Multiple(
+                    () => Assert.Equal(1, errors.Count),
+                    () => Assert.Contains(errors,
+                                          e => e.Contains($"at least 1 digit")));
             });
     }
 }
