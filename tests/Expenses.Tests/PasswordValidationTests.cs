@@ -15,19 +15,25 @@ public sealed record ValidatedPassword
     private static Validation<string, Unit> ValidateMinimumLength(string candidatePassword) =>
         candidatePassword.Length >= MinimumPasswordLength
             ? Success<string, Unit>(unit)
-            : Fail<string, Unit>($"Password must be at least 8 characters long.");
+            : Fail<string, Unit>($"Password must be at least {MinimumPasswordLength} characters long.");
 
     private static Validation<string, Unit> ValidateHasDigits(string candidatePassword) =>
         candidatePassword.Any(char.IsAsciiDigit)
             ? Success<string, Unit>(unit)
-            : Fail<string, Unit>($"Password must contain at least 1 digit.");
-    
+            : Fail<string, Unit>("Password must contain at least 1 digit.");
+
+    private static Validation<string, Unit> ValidateMixedCase(string candidatePassword) =>
+        candidatePassword.Any(char.IsUpper) && candidatePassword.Any(char.IsLower)
+            ? Success<string, Unit>(unit)
+            : Fail<string, Unit>("Password must contain both uppercase and lowercase letters.");
     
     public static Validation<string, ValidatedPassword> Create(string candidatePassword) =>
         // NOT Tuple(singleValue).Apply - silently always succeeds. See 
         // notes for phase 3.
-        (ValidateMinimumLength(candidatePassword), ValidateHasDigits(candidatePassword))
-            .Apply((_, _) => new ValidatedPassword(candidatePassword));
+        (ValidateMinimumLength(candidatePassword), 
+            ValidateHasDigits(candidatePassword), 
+            ValidateMixedCase(candidatePassword))
+            .Apply((_, _, _) => new ValidatedPassword(candidatePassword));
 }
 public class PasswordValidationTests
 {
@@ -59,8 +65,7 @@ public class PasswordValidationTests
             {
                 Assert.Multiple(
                     () => Assert.Equal(1, errors.Count),
-                    () => Assert.Contains(errors,
-                                          e => e.Contains($"at least 8 characters")));
+                    () => Assert.Contains("at least 8 characters", errors[0]));
             });
     }
 
@@ -77,8 +82,7 @@ public class PasswordValidationTests
             {
                 Assert.Multiple(
                     () => Assert.Equal(1, errors.Count),
-                    () => Assert.Contains(errors,
-                                          e => e.Contains($"at least 1 digit")));
+                    () => Assert.Contains("at least 1 digit", errors[0]));
             });
     }
 
@@ -99,5 +103,25 @@ public class PasswordValidationTests
                     () => Assert.Contains("at least 8 characters", errors[0]),
                     () => Assert.Contains("at least 1 digit", errors[1])
                     ));
+    }
+
+    [Fact]
+    public void ValidatedPassword_PasswordShortNoNumbersNoMixedCase_ReturnsFail()
+    {
+        const string candidatePassword = "+";
+        var result = ValidatedPassword.Create(candidatePassword);
+
+        result.Match(
+            Succ: unexpectedlyPassingPassword =>
+                Assert.Fail($"Password, `{unexpectedlyPassingPassword}`, unexpectedly passed"),
+            Fail: errors =>
+                Assert.Multiple(
+                    () => Assert.Equal(3, errors.Count),
+                    // The following sequence of tests relies on errors
+                    // collected in the same order as the original sequence.
+                    () => Assert.Contains("at least 8 characters", errors[0]),
+                    () => Assert.Contains("at least 1 digit", errors[1]),
+                    () => Assert.Contains("both uppercase and lowercase letters", errors[2])
+                ));
     }
 }
