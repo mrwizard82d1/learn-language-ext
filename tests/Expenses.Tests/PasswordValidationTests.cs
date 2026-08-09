@@ -22,18 +22,24 @@ public sealed record ValidatedPassword
             ? Success<string, Unit>(unit)
             : Fail<string, Unit>("Password must contain at least 1 digit.");
 
-    private static Validation<string, Unit> ValidateMixedCase(string candidatePassword) =>
-        candidatePassword.Any(char.IsUpper) && candidatePassword.Any(char.IsLower)
+    private static Validation<string, Unit> ValidateHasUpperCase(string candidatePassword) =>
+        candidatePassword.Any(char.IsUpper)
             ? Success<string, Unit>(unit)
-            : Fail<string, Unit>("Password must contain both uppercase and lowercase letters.");
+            : Fail<string, Unit>("Password must contain at least 1 uppercase letter.");
+
+    private static Validation<string, Unit> ValidateHasLowerCase(string candidatePassword) =>
+        candidatePassword.Any(char.IsLower)
+            ? Success<string, Unit>(unit)
+            : Fail<string, Unit>("Password must contain at least 1 lowercase letter.");
     
     public static Validation<string, ValidatedPassword> Create(string candidatePassword) =>
         // NOT Tuple(singleValue).Apply - silently always succeeds. See 
         // notes for phase 3.
         (ValidateMinimumLength(candidatePassword), 
             ValidateHasDigits(candidatePassword), 
-            ValidateMixedCase(candidatePassword))
-            .Apply((_, _, _) => new ValidatedPassword(candidatePassword));
+            ValidateHasUpperCase(candidatePassword),
+            ValidateHasLowerCase(candidatePassword))
+            .Apply((_, _, _, _) => new ValidatedPassword(candidatePassword));
 }
 public class PasswordValidationTests
 {
@@ -60,7 +66,7 @@ public class PasswordValidationTests
         
         result.Match(
             Succ: unexpectedlyPassingPassword => 
-                Assert.Fail($"Password, `{unexpectedlyPassingPassword}`, unexpectedly passed"),
+                Assert.Fail($"Password, `{unexpectedlyPassingPassword.Password}`, unexpectedly passed"),
             Fail: errors =>
             {
                 Assert.Multiple(
@@ -77,7 +83,7 @@ public class PasswordValidationTests
         
         result.Match(
             Succ: unexpectedlyPassingPassword => 
-                Assert.Fail($"Password, `{unexpectedlyPassingPassword}`, unexpectedly passed"),
+                Assert.Fail($"Password, `{unexpectedlyPassingPassword.Password}`, unexpectedly passed"),
             Fail: errors =>
             {
                 Assert.Multiple(
@@ -94,7 +100,7 @@ public class PasswordValidationTests
 
         result.Match(
             Succ: unexpectedlyPassingPassword =>
-                Assert.Fail($"Password, `{unexpectedlyPassingPassword}`, unexpectedly passed"),
+                Assert.Fail($"Password, `{unexpectedlyPassingPassword.Password}`, unexpectedly passed"),
             Fail: errors =>
                 Assert.Multiple(
                     () => Assert.Equal(2, errors.Count),
@@ -106,22 +112,23 @@ public class PasswordValidationTests
     }
 
     [Fact]
-    public void ValidatedPassword_PasswordShortNoNumbersNoMixedCase_ReturnsFail()
+    public void ValidatedPassword_AllFail_ReturnsAllFailures()
     {
         const string candidatePassword = "+";
         var result = ValidatedPassword.Create(candidatePassword);
 
         result.Match(
             Succ: unexpectedlyPassingPassword =>
-                Assert.Fail($"Password, `{unexpectedlyPassingPassword}`, unexpectedly passed"),
+                Assert.Fail($"Password, `{unexpectedlyPassingPassword.Password}`, unexpectedly passed"),
             Fail: errors =>
                 Assert.Multiple(
-                    () => Assert.Equal(3, errors.Count),
+                    () => Assert.Equal(4, errors.Count),
                     // The following sequence of tests relies on errors
                     // collected in the same order as the original sequence.
                     () => Assert.Contains("at least 8 characters", errors[0]),
                     () => Assert.Contains("at least 1 digit", errors[1]),
-                    () => Assert.Contains("both uppercase and lowercase letters", errors[2])
+                    () => Assert.Contains("at least 1 uppercase letter", errors[2]),
+                    () => Assert.Contains("at least 1 lowercase letter", errors[3])
                 ));
     }
 }
