@@ -81,4 +81,24 @@ public class PasswordValidationTests
                                           e => e.Contains($"at least 1 digit")));
             });
     }
+
+    [Fact]
+    public void ValidatedPassword_PasswordShortNoNumbers_ReturnsFail()
+    {
+        const string candidatePassword = "aBcDef";
+        var result = ValidatedPassword.Create(candidatePassword);
+        
+        result.Match(
+            Succ: unexpectedlyPassingPassword => 
+                Assert.Fail($"Password, `{unexpectedlyPassingPassword}`, unexpectedly passed"),
+            Fail: errors =>
+            {
+                Assert.Multiple(
+                    () => Assert.Equal(2, errors.Count),
+                    () => Assert.Contains(errors,
+                                          e => e.Contains($"at least 8 characters")),
+                    () => Assert.Contains(errors,
+                                          e => (e.Contains($"at least 1 digit"))));
+            });
+    }
 }
