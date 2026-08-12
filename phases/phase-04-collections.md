@@ -58,7 +58,7 @@ Confirmed in a scratch project against `LanguageExt.Core` 4.4.9:
 
 ## Candidate test list
 
-- [ ] `Map.Find` returns `Some(v)` for a present key, `None` for a missing key
+- [x] `Map.Find` returns `Some(v)` for a present key, `None` for a missing key
 - [ ] `Add` is non-destructive: the original map is unchanged, the returned map has the new entry
 - [ ] `AddOrUpdate` updates an existing key and inserts a missing one
 - [ ] `SummariseByCategory`: a `Seq<ExpenseEntry>` folds to a `Map<string, decimal>` of per-category totals
@@ -71,7 +71,7 @@ Confirmed in a scratch project against `LanguageExt.Core` 4.4.9:
 
 ## Steps
 
-### Step 1 — `Map<K,V>` basics: `Find` → `Option`  `[ ]`
+### Step 1 — `Map<K,V>` basics: `Find` → `Option`  `[x]`
 
 Create `tests/Expenses.Tests/ExpenseSummaryTests.cs`. Start by *characterising* `Map` — a lookup returns `Option`, tying back to Phase 1:
 
