@@ -27,4 +27,20 @@ public class ExpenseSummaryTests
         Assert.Equal(2, updated.Count); // new map has both
         LangExtAssert.Equal(Option<decimal>.None, original.Find("Gas"));
     }
+
+    [Fact]
+    public void AddOrUpdate_UpdateExisting_InsertsMissing()
+    {
+        var m = Map(("Food", 5m));
+        
+        var updated = m.AddOrUpdate("Food", 
+                                    Some: cur => cur + 3m, 
+                                    None: () => 3m); // 5 -> 8
+        var inserted = m.AddOrUpdate("Gas", 
+                                     Some: cur => cur + 3m, 
+                                     None: () => 3m); // absent -> 3
+        
+        LangExtAssert.Equal(Some(8m), updated.Find("Food"));
+        LangExtAssert.Equal(Some(3m), inserted.Find("Gas"));
+    }
 }

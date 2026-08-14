@@ -60,7 +60,7 @@ Confirmed in a scratch project against `LanguageExt.Core` 4.4.9:
 
 - [x] `Map.Find` returns `Some(v)` for a present key, `None` for a missing key
 - [x] `Add` is non-destructive: the original map is unchanged, the returned map has the new entry
-- [ ] `AddOrUpdate` updates an existing key and inserts a missing one
+- [x] `AddOrUpdate` updates an existing key and inserts a missing one
 - [ ] `SummariseByCategory`: a `Seq<ExpenseEntry>` folds to a `Map<string, decimal>` of per-category totals
 - [ ] empty input → empty `Map`
 - [ ] a category total is the **sum** of its entries (multiple entries accumulate)
@@ -113,7 +113,7 @@ public void Add_IsNonDestructive()
 
 This is the persistent-collection guarantee you know from Clojure/immutable-JS, in C#: the "mutation" returns a new value; the old one is unchanged (structural sharing under the hood).
 
-### Step 3 — Add-or-accumulate: `AddOrUpdate`  `[ ]`
+### Step 3 — Add-or-accumulate: `AddOrUpdate`  `[x]`
 
 The building block for grouping — update if the key exists, insert if it doesn't:
 
