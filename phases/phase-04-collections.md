@@ -61,9 +61,9 @@ Confirmed in a scratch project against `LanguageExt.Core` 4.4.9:
 - [x] `Map.Find` returns `Some(v)` for a present key, `None` for a missing key
 - [x] `Add` is non-destructive: the original map is unchanged, the returned map has the new entry
 - [x] `AddOrUpdate` updates an existing key and inserts a missing one
-- [ ] `SummariseByCategory`: a `Seq<ExpenseEntry>` folds to a `Map<string, decimal>` of per-category totals
-- [ ] empty input → empty `Map`
-- [ ] a category total is the **sum** of its entries (multiple entries accumulate)
+- [x] `SummariseByCategory`: a `Seq<ExpenseEntry>` folds to a `Map<string, decimal>` of per-category totals
+- [x] empty input → empty `Map`
+- [x] a category total is the **sum** of its entries (multiple entries accumulate)
 - [ ] querying the summary: `TotalFor(category)` returns `Some(total)` / `None`
 - [ ] *(stretch)* `HashMap` vs `Map` ordering; `Set` for distinct categories; `Keys`/`Values`; sort totals descending for a "top categories" view
 
@@ -133,7 +133,7 @@ public void AddOrUpdate_UpdatesExisting_InsertsMissing()
 
 `AddOrUpdate(key, Some: existing => …, None: () => …)` is LanguageExt's `merge-with`/`(update … (fnil + 0))`.
 
-### Step 4 — The payoff: `SummariseByCategory` (fold a `Seq` into a `Map`)  `[ ]`
+### Step 4 — The payoff: `SummariseByCategory` (fold a `Seq` into a `Map`)  `[x]`
 
 Add the production function (inline for now). You'll need `ExpenseEntry` — reuse Phase 2's from `src/Expenses` (`using Expenses;`), or a small inline record if you prefer to keep this test self-contained:
 

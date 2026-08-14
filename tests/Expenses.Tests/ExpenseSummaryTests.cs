@@ -3,10 +3,19 @@ namespace Expenses.Tests;
 using LanguageExt;
 using static LanguageExt.Prelude;
 
+public static class ExpenseSummary
+{
+    public static Map<string, decimal> SummarizeByCategory(Seq<ExpenseEntry> entries) =>
+        entries.Fold(Map<string, decimal>(),
+                     (acc, e) => acc.AddOrUpdate(e.Category,
+                                                 Some: cur => cur + e.Amount,
+                                                 None: () => e.Amount));
+}
+
 public class ExpenseSummaryTests
 {
     [Fact]
-    public void SmokeTest() => LangExtAssert.Equal(4, 2 + 2);
+    public void SmokeTest() => Assert.Equal(4, 2 + 2);
 
     [Fact]
     public void Map_Find_ReturnsSomeForHit_NoneForMiss()
@@ -42,5 +51,29 @@ public class ExpenseSummaryTests
         
         LangExtAssert.Equal(Some(8m), updated.Find("Food"));
         LangExtAssert.Equal(Some(3m), inserted.Find("Gas"));
+    }
+
+    [Fact]
+    public void SummarizeByCategory_SumsAmountPerCategory()
+    {
+        var entries = Seq(
+            new ExpenseEntry(new DateOnly(2026, 1, 1), 5m, "Food", "lunch"),
+            new ExpenseEntry(new DateOnly(2026, 1, 2), 3m, "Food", "snack"),
+            new ExpenseEntry(new DateOnly(2026, 1, 3), 10m, "Gas", "fill-up"));
+
+        var totals = ExpenseSummary.SummarizeByCategory(entries);
+        
+        LangExtAssert.Equal(Some(8m), totals.Find("Food"));
+        LangExtAssert.Equal(Some(10m), totals.Find("Gas"));
+        Assert.Equal(2, totals.Count);
+    }
+
+    [Fact]
+    public void SummarizeByCategory_Empty_ReturnsEmptyMap()
+    {
+        var totals = ExpenseSummary.SummarizeByCategory(Seq<ExpenseEntry>());
+        
+        // No `Some(x)` values so the "total" is zero (0)
+        Assert.Equal(0, totals.Count);
     }
 }
