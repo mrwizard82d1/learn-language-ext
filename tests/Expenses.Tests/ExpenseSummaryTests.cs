@@ -16,4 +16,15 @@ public class ExpenseSummaryTests
         LangExtAssert.Equal(Some(8m), m.Find("Food"));
         LangExtAssert.Equal(Option<decimal>.None, m.Find("Rent"));
     }
+
+    [Fact]
+    public void Add_IsNonDestructive()
+    {
+        var original = Map(("Food", 8m));
+        var updated = original.Add("Gas", 10m);
+        
+        Assert.Equal(1, original.Count); // original untouched
+        Assert.Equal(2, updated.Count); // new map has both
+        LangExtAssert.Equal(Option<decimal>.None, original.Find("Gas"));
+    }
 }

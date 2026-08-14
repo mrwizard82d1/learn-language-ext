@@ -59,7 +59,7 @@ Confirmed in a scratch project against `LanguageExt.Core` 4.4.9:
 ## Candidate test list
 
 - [x] `Map.Find` returns `Some(v)` for a present key, `None` for a missing key
-- [ ] `Add` is non-destructive: the original map is unchanged, the returned map has the new entry
+- [x] `Add` is non-destructive: the original map is unchanged, the returned map has the new entry
 - [ ] `AddOrUpdate` updates an existing key and inserts a missing one
 - [ ] `SummariseByCategory`: a `Seq<ExpenseEntry>` folds to a `Map<string, decimal>` of per-category totals
 - [ ] empty input → empty `Map`
@@ -96,7 +96,7 @@ public class ExpenseSummaryTests
 
 Notice: no `null`, no `KeyNotFoundException` — a miss is `None`, exactly Phase 1. (The indexer `m["Rent"]` *would* throw — prefer `Find`.)
 
-### Step 2 — Persistence: `Add` is non-destructive  `[ ]`
+### Step 2 — Persistence: `Add` is non-destructive  `[x]`
 
 ```csharp
 [Fact]
