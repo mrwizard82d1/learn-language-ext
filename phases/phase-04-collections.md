@@ -198,7 +198,7 @@ public void TotalFor_ReturnsSomeForKnown_NoneForUnknown()
 
 The whole pipeline now speaks `Option` at the edges — a missing category is `None`, not an exception.
 
-### Step 6 — Refactor: extract to production  `[ ]`
+### Step 6 — Refactor: extract to production  `[x]`
 
 Green ⇒ promote `ExpenseSummary` into `src/Expenses` (namespace `Expenses`, `using LanguageExt; using static LanguageExt.Prelude;`). Delete the inline copy; re-run the full suite (smoke + Phases 1–3 + kata + coordinate + password all still green).
 

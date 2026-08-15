@@ -28,7 +28,7 @@ By the end you should be able to:
 - [x] Phase 1 — `Option<T>` the LanguageExt way
 - [x] Phase 2 — `Either<L, R>` and `Fin<T>` *(concepts completed via the refresher kata `katas/refresher-01-library.md`; main-line ExpenseParser stopped at Step 2)*
 - [x] Phase 3 — `Validation<F, S>`
-- [ ] Phase 4 — Persistent collections (LanguageExt flavor)
+- [x] Phase 4 — Persistent collections (LanguageExt flavor)
 - [ ] Phase 5 — LINQ-style composition
 - [ ] Phase 6 — Capstone *(direction: functional core / imperative shell, optional Clean Architecture; architecture pre-work + the MediatR/Contoso assessment live in [`FUTURE_DIRECTIONS.md`](FUTURE_DIRECTIONS.md))*
 
