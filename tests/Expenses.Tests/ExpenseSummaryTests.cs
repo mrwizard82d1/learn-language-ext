@@ -10,6 +10,9 @@ public static class ExpenseSummary
                      (acc, e) => acc.AddOrUpdate(e.Category,
                                                  Some: cur => cur + e.Amount,
                                                  None: () => e.Amount));
+
+    public static Option<decimal> TotalFor(Map<string, decimal> summary, string category) =>
+        summary.Find(category);
 }
 
 public class ExpenseSummaryTests
@@ -75,5 +78,24 @@ public class ExpenseSummaryTests
         
         // No `Some(x)` values so the "total" is zero (0)
         Assert.Equal(0, totals.Count);
+    }
+
+    [Fact]
+    public void TotalFor_ReturnsSomeForKnown_NoneForUnknown()
+    {
+        var totals =
+            ExpenseSummary.SummarizeByCategory(
+                Seq(
+                    new ExpenseEntry(new DateOnly(2026, 1, 1),
+                                     5m,
+                                     "Food",
+                                     "lunch"),
+                    new ExpenseEntry(new DateOnly(2026, 1, 2),
+                                     10m,
+                                     "Gas",
+                                     "fill-up")));
+        
+        LangExtAssert.Equal(Some(5m), ExpenseSummary.TotalFor(totals, "Food"));
+        LangExtAssert.Equal(None, ExpenseSummary.TotalFor(totals, "Rent"));
     }
 }

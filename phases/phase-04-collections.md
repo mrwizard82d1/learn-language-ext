@@ -64,7 +64,7 @@ Confirmed in a scratch project against `LanguageExt.Core` 4.4.9:
 - [x] `SummariseByCategory`: a `Seq<ExpenseEntry>` folds to a `Map<string, decimal>` of per-category totals
 - [x] empty input → empty `Map`
 - [x] a category total is the **sum** of its entries (multiple entries accumulate)
-- [ ] querying the summary: `TotalFor(category)` returns `Some(total)` / `None`
+- [x] querying the summary: `TotalFor(category)` returns `Some(total)` / `None`
 - [ ] *(stretch)* `HashMap` vs `Map` ordering; `Set` for distinct categories; `Keys`/`Values`; sort totals descending for a "top categories" view
 
 ---
@@ -178,7 +178,7 @@ public void SummariseByCategory_Empty_ReturnsEmptyMap()
 
 *(Adjust the `ExpenseEntry` constructor call to match its actual shape in `src/Expenses`.)*
 
-### Step 5 — Query the summary: `TotalFor` → `Option`  `[ ]`
+### Step 5 — Query the summary: `TotalFor` → `Option`  `[x]`
 
 Wrap the lookup so callers stay in the elevated world:
 
