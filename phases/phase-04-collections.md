@@ -215,6 +215,29 @@ Green ⇒ promote `ExpenseSummary` into `src/Expenses` (namespace `Expenses`, `u
 
 ---
 
+## Application challenge (optional) — Word-frequency counter
+
+*Fresh domain, practice not a test — the same `Fold` + `AddOrUpdate` + `Find → Option` you just built, applied to text.*
+
+**Goal:** `WordFrequency.Count(string text) → Map<string, int>` (word → occurrences), then query it.
+
+**Shape (transfer of `SummariseByCategory`):**
+- Split `text` into words, then `Fold` a `Seq<string>` into a `Map<string, int>` with `AddOrUpdate(word, cur => cur + 1, () => 1)` — count-by-word instead of sum-by-category. (Note the accumulator is `+ 1`, and the seed is `1`, not the amount.)
+- A query — `CountOf(freqs, word) → Option<int>` = `freqs.Find(word)` — so an absent word is `None`, not `0` (a deliberate distinction worth a test).
+
+**Tests:** a word occurring 3× → `Some(3)`; a word not in the text → `None`; empty text → empty `Map`; and your *case*/*punctuation* decision (below).
+
+**Design calls (yours — make them consciously):**
+- **Splitting:** `text.Split(...)` on what? Whitespace only leaves `"cat,"` ≠ `"cat"`. Strip punctuation, or accept it? (`StringSplitOptions.RemoveEmptyEntries` handles doubled spaces.)
+- **Case:** is `"The"` the same word as `"the"`? If so, normalise (`.ToLowerInvariant()`) before counting.
+- **Absent vs zero:** `Find` gives `None` for an unseen word — keep that (don't paper over it with `0`); it's the `Option`-at-the-edge lesson.
+
+**Stretch:** `MostFrequent(freqs) → Option<(string Word, int Count)>` (empty text → `None`); distinct-word count (`freqs.Count` / `freqs.Keys`); a top-N view via `toSeq(freqs).OrderByDescending(kv => kv.Value)`.
+
+**Mechanics:** fresh test file (`WordFrequencyTests.cs`), inline types, TDD; `.Fold`/`.AddOrUpdate`/`.Find`. Less guided — drive it; ask on demand.
+
+---
+
 ## Notes & questions
 
 _Fill in as you go._
